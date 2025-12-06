@@ -1,12 +1,29 @@
 import { Link } from "react-router";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../customComponent/DropDown/Select";
 import CustomSelect from "../../customComponent/DropDown/CustomDropdown";
 // import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../DropDown/Select";
 
 
 interface BreadcrumbProps {
   pageTitle: string;
-   subTitle: string;
+  subTitle?: string;
+
+  // dropdown
+  label?: string;
+  placeholder?: string;
+  dropdownOptions?: { label: string; value: string }[];
+  selectedItem?: string;
+  onDropdownChange?: (value: string) => void;
+
+  // nav items
+  navItems?: boolean;
+
+  // add buttons
+  addButtons?: {
+    label: string;
+    icon: any;
+    variant: keyof typeof variantClasses;
+    onClick: () => void;
+  }[];
 }
 const variantClasses: any = {
   primary: "bg-brand-500 hover:bg-brand-600 text-white",
