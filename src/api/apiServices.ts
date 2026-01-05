@@ -1,11 +1,16 @@
 import axios from "axios";
+import { resolveModule } from "./resolveModule";
+import { resolveAction } from "./actionResolver";
+import { isAuthApi } from "./apiRouter";
+import { toast } from "sonner";
 
 // 🔹 Base URL for Vite
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
+const CORE_API = import.meta.env.VITE_API_BASE_URL;
+const AUTH_API = import.meta.env.VITE_API_BASE_URL2;
 // Create Axios instance
 const api = axios.create({
-  baseURL: BASE_URL,
+  // baseURL: BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
@@ -26,13 +31,33 @@ const handleLogout = () => {
 // 🔹 Request Interceptor – attach access token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("authToken"); // OR correct key
+    const url = config.url || "";
+    const method = config.method?.toLowerCase() || "";
 
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    } else {
-      console.warn("No auth token found. Sending request without Authorization.");
-    }
+    // 🔀 Decide backend
+    const isAuth = isAuthApi(url);
+    config.baseURL = isAuth ? AUTH_API : CORE_API;
+
+    const isWriteMethod = ["post", "put", "patch", "delete"].includes(method);
+
+    // 🔐 ONLY for CORE + WRITE APIs
+   if (!isAuth) {
+  const token = localStorage.getItem("authToken");
+
+  if (!token) {
+    handleLogout();
+    return Promise.reject("No auth token");
+  }
+
+  // ✅ Send token for ALL core APIs (GET + WRITE)
+  config.headers.Authorization = `Bearer ${token}`;
+
+  // ✅ RBAC headers only for WRITE APIs
+  if (["post", "put", "patch", "delete"].includes(method)) {
+    config.headers["x-module"] = resolveModule();
+    config.headers["action-perform"] = resolveAction(method);
+  }
+}
     return config;
   },
   (error) => Promise.reject(error)
@@ -135,6 +160,7 @@ export const AxiosPostWithParams = async (
 export const axiosDelete = async (endpoint, config = {}) => {
   try {
     const response = await api.delete(endpoint, config);
+    console.log(response,"axiosDelete")
     return response.data;
   } catch (err) {
     console.error("DELETE Error:", err.message);
@@ -146,6 +172,7 @@ export const axiosPatch = async (endpoint, body = {}, config = {}) => {
     const response = await api.patch(endpoint, body, config);
     return response.data;
   } catch (err) {
+    toast.error(err.message)
     console.error("PATCH Error:", err.message);
     throw err;
   }

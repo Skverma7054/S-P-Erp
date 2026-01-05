@@ -67,7 +67,7 @@ export default function ManageCategory() {
   const createCategory = useMutation({
     mutationFn: (payload) => postFetch("/category", payload),
     onSuccess: () => {
-      queryClient.invalidateQueries(["categories"]);
+      queryClient.invalidateQueries({ queryKey:["categories"]});
       modal.closeModal();
       alert("Category created!");
     },

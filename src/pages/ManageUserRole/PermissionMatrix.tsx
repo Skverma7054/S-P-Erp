@@ -83,7 +83,7 @@ export default function RolePermissionMatrix() {
   const saveMutation = useMutation({
     mutationFn: (payload) => postFetch(`/role/${selectedRole}`, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries(["permissions"]);
+      queryClient.invalidateQueries({ queryKey:["permissions"]});
       alert("Permissions updated successfully!");
     },
   });

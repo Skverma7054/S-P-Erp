@@ -13,6 +13,7 @@ interface InputProps {
   max?: string;
   step?: number;
   disabled?: boolean;
+  readOnly?: boolean; // ✅ ADD THIS
   success?: boolean;
   error?: boolean;
   hint?: string;
@@ -30,6 +31,7 @@ const Input: FC<InputProps> = ({
   max,
   step,
   disabled = false,
+  readOnly = false, // ✅ ADD THIS
   success = false,
   error = false,
   hint,
@@ -46,7 +48,10 @@ if (type !== "date") {
 
   if (disabled) {
     inputClasses += ` text-gray-500 border-gray-300 opacity-40 bg-gray-100 cursor-not-allowed dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 opacity-40`;
-  } else if (error) {
+  }else if (readOnly) {
+  inputClasses +=
+    " bg-gray-100 border-gray-300 text-gray-700 cursor-default dark:bg-gray-800 dark:text-gray-300";
+} else if (error) {
     inputClasses += `  border-error-500 focus:border-error-300 focus:ring-error-500/20 dark:text-error-400 dark:border-error-500 dark:focus:border-error-800`;
   } else if (success) {
     inputClasses += `  border-success-500 focus:border-success-300 focus:ring-success-500/20 dark:text-success-400 dark:border-success-500 dark:focus:border-success-800`;
@@ -62,7 +67,8 @@ if (type !== "date") {
         name={name}
         placeholder={placeholder}
         value={value}
-        onChange={onChange}
+         onChange={readOnly ? undefined : onChange} // ✅ prevent edits
+        // onChange={onChange}
         min={min}
         max={max}
         step={step}

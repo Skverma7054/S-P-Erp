@@ -96,7 +96,7 @@ const confirmDelete = async () => {
   const createModule = useMutation({
     mutationFn: (payload) => postFetch("/module", payload),
     onSuccess: () => {
-      queryClient.invalidateQueries(["modules"]);
+      queryClient.invalidateQueries({ queryKey:["modules"]});
       modal.closeModal();
     },
   });
@@ -108,7 +108,7 @@ const confirmDelete = async () => {
     mutationFn: (payload) =>
       axiosPatch(`/module/${formData.id}`, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries(["modules"]);
+      queryClient.invalidateQueries({ queryKey:["modules"]});
       modal.closeModal();
     },
   });
@@ -119,7 +119,7 @@ const confirmDelete = async () => {
   const deleteModule = useMutation({
     mutationFn: (id) => axiosDelete(`/module/${id}`),
     onSuccess: () => {
-      queryClient.invalidateQueries(["modules"]);
+      queryClient.invalidateQueries({ queryKey:["modules"]});
     },
   });
 

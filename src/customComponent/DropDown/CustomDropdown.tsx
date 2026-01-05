@@ -9,16 +9,20 @@ import {
 import Label from "../../components/form/Label";
 
 interface Option {
-  value: string;
+   value: string | number;
   label: string;
 }
 
 interface CustomSelectProps {
+   id?: string;
+   label?: string;
   placeholder?: string;
   options: Option[];
-  value?: string;
-  onChange?: (value: string) => void;
+ value?: string | number;
+   onChange?: (value: string) => void;
   className?: string;
+  loading?: boolean;   // ✅ NEW
+  emptyText?: string; // ✅ NEW
 }
 
 const CustomSelect: React.FC<CustomSelectProps> = ({
@@ -27,13 +31,16 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
   value,
   onChange,
   className = "",
-  label
+  label,
+  id,
+  loading = false,
+   emptyText = "No options available",
 }) => {
   return (<>
     {/* {label && <label className="text-sm text-gray-700">{label}</label>} */}
         {label && <Label>{label}</Label>}
 
-    <Select value={value} onValueChange={onChange}>
+    <Select id={id} value={value} onValueChange={onChange} disabled={loading || options.length === 0}>
       <SelectTrigger
         className={`
           group w-40 rounded-md border border-gray-300 bg-white 
@@ -43,12 +50,42 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
           flex items-center justify-between
           appearance-none
           [&>svg:last-child]:hidden
+         ${(loading || options.length === 0) ? "opacity-60 cursor-not-allowed" : ""}
           ${className}
         `}
       >
-        <SelectValue placeholder={placeholder} />
+        <SelectValue placeholder={
+              loading
+                ? "Loading..."
+                : options.length === 0
+                ? emptyText
+                : placeholder
+            } />
 
         {/* Custom arrow */}
+         {/* Right icon */}
+          {loading ? (
+            <svg
+              className="w-4 h-4 animate-spin text-gray-500"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <circle
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="3"
+                opacity="0.25"
+              />
+              <path
+                d="M22 12a10 10 0 0 1-10 10"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+              />
+            </svg>
+          ) : (
         <svg
           className="
             w-4 h-4 text-gray-600 dark:text-gray-300
@@ -66,18 +103,23 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
             strokeLinecap="round"
             strokeLinejoin="round"
           />
-        </svg>
+        </svg>)}
       </SelectTrigger>
-
+ {!loading && (
       <SelectContent
         className="
           bg-white border border-gray-200 dark:border-gray-700
           shadow-lg rounded-lg z-[99999]
         "
       >
-        {options.map((opt) => (
+        {options.length === 0 ? (
+              <div className="px-3 py-2 text-sm text-gray-500 text-center">
+                {emptyText}
+              </div>
+            ) : (
+        options.map((opt,ind) => (
           <SelectItem
-            key={opt.value}
+            key={`${opt.value}-${ind}`}
             value={opt.value}
             className="
               text-gray-700 dark:text-white
@@ -87,8 +129,8 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
           >
             {opt.label}
           </SelectItem>
-        ))}
-      </SelectContent>
+        )))}
+      </SelectContent>)}
     </Select>
     </>
   );

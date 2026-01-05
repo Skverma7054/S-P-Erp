@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router";
-import { ChevronRight, Database, FolderKanban, Settings, ShieldUser, User } from 'lucide-react';
+import { ChevronRight, Database, FileBadge, FolderKanban, Settings, ShieldUser, User } from 'lucide-react';
 // Assume these icons are imported from an icon library
 import {
   BoltIcon,
@@ -18,10 +18,12 @@ import {
 } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
 import SidebarWidget from "./SidebarWidget";
+import { useAuth } from "../pages/AuthPages/AuthProvider";
 
 type NavItem = {
   name: string;
   icon: React.ReactNode;
+   module?: string;
   path?: string;
   subItems?: { name: string; path: string; pro?: boolean; new?: boolean }[];
 };
@@ -43,9 +45,20 @@ const navItems: NavItem[] = [
     icon: <Database />,
     name: "Master Creation",
        subItems: [
-      { name: "Material Inventory", path: "/master-creation", pro: false },
+      // { name: "Material Inventory", path: "/master-creation", pro: false },
       { name: "Category", path: "/manage-category", pro: false },
        { name: "Unit", path: "/manage-unit", pro: false },],
+    // path: "/calendar",
+        // path: "/master-creation",
+
+  },
+  {
+    icon: <Database />,
+    name: "Inventory Management",
+       subItems: [
+      { name: "Material Master", path: "/master-creation", pro: false },
+      { name: "Purchase Requisition (PR)", path: "/pr-create", pro: false },
+       { name: "Purchase Order (PO)", path: "/purchase-order", pro: false },{ name: "GRN (Goods Receipt)", path: "/good-receipt", pro: false }],
     // path: "/calendar",
         // path: "/master-creation",
 
@@ -62,12 +75,20 @@ const navItems: NavItem[] = [
     // subItems: [{ name: "Form Elements", path: "/form-elements", pro: false }],
   },
   {
+    name: "DPR Module",
+    icon: <FileBadge />,
+    path: "/dpr-module"
+    // subItems: [{ name: "Form Elements", path: "/form-elements", pro: false }],
+  },
+  {
     icon: <ShieldUser />,
     name: "Manage Role & Permission",
        subItems: [
-        { name: "Manage Role", path: "/manage-role", pro: false },
         { name: "Manage Module", path: "/manage-module", pro: true },
-        { name: "Manage Permission", path: "/manage-permission", pro: false },
+                { name: "Manage Permission", path: "/manage-permission", pro: false },
+
+        { name: "Manage Role", path: "/manage-role", pro: false },
+        
       { name: "Manage User", path: "/manage-user", pro: false },
        { name: "Role & Permissions", path: "/role-permission", pro: false },],
     // path: "/calendar",
@@ -145,6 +166,7 @@ const othersItems: NavItem[] = [
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const location = useLocation();
+const { hasModuleAccess } = useAuth();
 
   const [openSubmenu, setOpenSubmenu] = useState<{
     type: "main" | "others";
@@ -343,6 +365,10 @@ const AppSidebar: React.FC = () => {
       ))}
     </ul>
   );
+const filteredNavItems = navItems.filter(
+  (item) => !item.name || hasModuleAccess(item.name)
+);
+console.log(hasModuleAccess("Inventory"));
 
   return (
     <aside
@@ -365,6 +391,7 @@ const AppSidebar: React.FC = () => {
         }`}
       >
         <Link to="/">
+
           {/* {isExpanded || isHovered || isMobileOpen ? (
             <>
               <img
@@ -390,9 +417,35 @@ const AppSidebar: React.FC = () => {
               height={32}
             />
           )} */}
+           {isExpanded || isHovered || isMobileOpen ? (
+            <>
+              <img
+                className="dark:hidden"
+                src="/fav.jpeg"
+                alt="Logo"
+                width={40}
+                height={20}
+              />
+              <img
+                className="hidden dark:block"
+               src="/fav.jpeg"
+                alt="Logo"
+                width={150}
+                height={40}
+              />
+            </>
+          ) : (
+            <img
+             src="/fav.jpeg"
+              alt="Logo"
+              width={32}
+              height={32}
+            />
+          )}
         </Link>
       </div>
-      <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
+      <div className="flex-1 overflow-y-auto duration-300 ease-linear no-scrollbar">
+      {/* <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar"> */}
         <nav className="mb-6">
           <div className="flex flex-col gap-4">
             <div>
@@ -409,7 +462,9 @@ const AppSidebar: React.FC = () => {
                   <HorizontaLDots className="size-6" />
                 )}
               </h2>
-              {renderMenuItems(navItems, "main")}
+              {renderMenuItems(filteredNavItems, "main")}
+
+              {/* {renderMenuItems(navItems, "main")} */}
             </div>
             <div className="">
               <h2
@@ -431,6 +486,12 @@ const AppSidebar: React.FC = () => {
         </nav>
         {/* {isExpanded || isHovered || isMobileOpen ? <SidebarWidget /> : null} */}
       </div>
+      {/* 🔹 FIXED BOTTOM WIDGET */}
+{(isExpanded || isHovered || isMobileOpen) && (
+  <div className="px-3 pb-4">
+    <SidebarWidget />
+  </div>
+)}
     </aside>
   );
 };

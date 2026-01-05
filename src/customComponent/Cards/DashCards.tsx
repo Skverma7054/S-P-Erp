@@ -33,9 +33,9 @@ const MetricCard = ({ metric }) => {
 
   return (
     <div
-      className={`rounded-2xl border ${metric.borderColor} ${metric.bgColor} 
+      className={`rounded-2xl border ${metric.borderColor} ${metric.bgColor ||  "bg-white"} 
       p-5 dark:border-gray-800 dark:bg-gray-900/50  
-      transition duration-300 hover:shadow-xl`}
+      transition duration-300 hover:shadow-md`}
     >
       {/* Icon Container */}
       {IconComponent &&

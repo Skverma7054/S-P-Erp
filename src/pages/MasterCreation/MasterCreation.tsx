@@ -7,7 +7,7 @@ import { useModal } from "../../hooks/useModal";
 import CustomModal from "../../customComponent/CustomModal/CustomModal";
 import CustomSelectModal from "../../customComponent/CustomModal/CustomSelectModal";
 import { useNavigate } from "react-router";
-import { AxiosGetWithParams, postFetch } from "../../api/apiServices";
+import { axiosGet, AxiosGetWithParams, postFetch } from "../../api/apiServices";
 import { useMutation, useQuery } from "@tanstack/react-query";
 const columns = [
   { key: "materialName", label: "Material Name" },
@@ -20,7 +20,9 @@ const columns = [
   {
     key: "action",
     label: "Actions",
-    showIcon: { view: true, edit: true, delete: true },
+    showIcon: { 
+      // view: true, 
+      edit: true, delete: true },
   },
 ];
 
@@ -149,10 +151,10 @@ const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
   name: "",
-  category: "",
-  unit: "",
-  code: "",
-  minThreshold: "",
+  categoryId: "",
+  unitId: "",
+  material_code: "",
+  minimum_threshold_quantity: "",
   status: "Active",
 });
   const projects = [
@@ -160,7 +162,88 @@ const navigate = useNavigate();
     { id: "p2", name: "Metro Line 3 Construction" },
     { id: "p3", name: "Coastal Road Project" },
   ];
+  const { data: categoryData ,isLoading:categoryLoading } = useQuery({
+  queryKey: ["categories"],
+  queryFn: () =>
+    axiosGet("/category", {
+      params: { page: 1, limit: 100 },
+    }),
+});
 
+const { data: unitData , isLoading:unitLoading } = useQuery({
+  queryKey: ["units"],
+  queryFn: () =>
+    axiosGet("/unit", {
+      params: { page: 1, limit: 100 },
+    }),
+});
+const categoryOptions =
+  categoryData?.categories?.map((cat) => ({
+    value: String(cat.id),
+    label: cat.name,
+  })) || [];
+
+const unitOptions =
+  unitData?.units?.map((unit) => ({
+    value: String(unit.id),
+    label: unit.name,
+  })) || [];
+
+const modalFields = [
+  {
+    heading: "Material Details",
+    items: [
+      {
+        name: "name",
+        label: "Material Name",
+        placeholder: "Enter material name",
+        type: "text",
+      },
+      {
+        name: "categoryId",
+        label: "Category",
+        placeholder: "Select Category",
+        type: "select",
+        options: categoryOptions,
+        loading:categoryLoading,
+      },
+      {
+        name: "unitId",
+        label: "Unit",
+        placeholder: "Select Unit",
+        type: "select",
+        options: unitOptions,
+        loading:unitLoading,
+      },
+      {
+        name: "material_code",
+        label: "Material Code",
+        type: "text",
+        placeholder: "E.g. CEM-001",
+      },
+      {
+        name: "minimum_threshold_quantity",
+        label: "Minimum Threshold",
+        type: "number",
+        placeholder: "Enter qty",
+      },
+    ],
+  },
+
+  {
+    heading: "Status Options",
+    items: [
+      {
+        name: "status",
+        label: "Status",
+        type: "select",
+        placeholder: "Select Status",
+        options: ["Active", "Inactive"],
+        fullWidth: true,
+      },
+    ],
+  },
+];
   const handleMaterialInventory = () => {
     console.log("Material Inventory Clicked");
     projectModal.openModal();
@@ -169,12 +252,12 @@ const navigate = useNavigate();
   };
   const handleAddMaterial = () => {
   setFormData({
-    name: "",
-    category: "",
-    unit: "",
-    code: "",
-    minThreshold: "",
-    status: "Active",
+   name: "",
+  categoryId: "",
+  unitId: "",
+  material_code: "",
+  minimum_threshold_quantity: "",
+  status: "Active",
   });
   
   materialModal.openModal();
@@ -213,29 +296,34 @@ const { data: materialData, isLoading, isError } = useQuery({
       status: "",
     }),
 });
+console.log(materialData,"----Material data");
+
 const tableData =
   materialData?.materials?.map((item) => ({
     id: item.id,
-    materialName: item.name,
-    category: item.category?.name,
-categoryId: item.categoryId,
-categoryDescription: item.category?.description,
-    unit: item.unit.name,
-    unitId:item.unit.id,
-    unitDescription:item.unit.description,
-    code: item.material_code,
-    minThreshold: item.minimum_threshold_quantity,
-    status: item.status,
+    materialName: item.name ?? "-", // fallback
+    category: item.category?.name ?? "-", // ✅ safe
+    categoryId: item.category?.id ?? "",
+    categoryDescription: item.category?.description ?? "",
+
+    unit: item.unit?.name ?? "-", // ✅ safe
+    unitId: item.unit?.id ?? "",
+    unitDescription: item.unit?.description ?? "",
+
+    code: item.material_code ?? "-",
+    minThreshold: item.minimum_threshold_quantity ?? 0,
+    status: item.status ?? "inactive",
   })) || [];
+
 
   const handleSave = () => {
   const payload = {
     name: formData.name,
-    category: formData.category,
-    unit_of_measure: formData.unit,
+    categoryId: Number(formData.categoryId),
+    unitId: Number(formData.unitId),
     status: formData.status.toLowerCase(),
-    minimum_threshold_quantity: Number(formData.minThreshold),
-    material_code: formData.code,
+    minimum_threshold_quantity: Number(formData.minimum_threshold_quantity),
+    material_code: formData.material_code,
   };
 
   console.log("Payload sending:", payload);
@@ -271,19 +359,19 @@ categoryDescription: item.category?.description,
     // },
   ];
   const handleView = (row: any) => alert(`Viewing: ${row}`);
-  const handleEdit = (row: any) => {
-    console.log(row)
+  const handleEdit = (row) => {
   setFormData({
-    name: row.materialName,
-    category: row.category,
-    unit: row.unit,
-    code: row.code,
-    minThreshold: row.minThreshold,
-    status: row.status,
+    name: row.materialName ?? "",
+    categoryId: row.categoryId || "",
+    unitId: row.unitId || "",
+    material_code: row.code ?? "",
+    minimum_threshold_quantity: row.minThreshold ?? "",
+    status: row.status ?? "Active",
   });
 
-  openModal();
+  materialModal.openModal();
 };
+
   const handleDelete = (row: any) => alert(`Deleting: ${row.user.name}`);
   const handleExport = () => {
     alert(`Download: ${row.user.name}`);

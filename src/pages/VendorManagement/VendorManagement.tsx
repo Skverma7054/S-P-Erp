@@ -12,7 +12,7 @@ import { axiosGet, postFetch } from "../../api/apiServices";
 
 const columns = [
   { key: "name", label: "Vendor Name" },
-  { key: "vendor_type", label: "Type" },
+  { key: "vendor_type", label: "Category" },
   { key: "GST_number", label: "GST Number" },
   { key: "contact_no", label: "Contact" },
   { key: "email", label: "Email" },
@@ -82,54 +82,7 @@ const data = [
 ];
 
 
-const vendorModalFields = [
-  {
-    heading: "Vendor Details",
-    items: [
-      {
-        name: "name",
-        label: "Enter vendor name",
-        type: "text",
-        placeholder: "Enter vendor name",
-      },
-      {
-        name: "vendor_type",
-        label: "Select type",
-        type: "select",
-        options: [
-          { label: "Material Supplier", value: "Material Supplier" },
-          { label: "Equipment Supplier", value: "Equipment Supplier" },
-          { label: "Subcontractor", value: "Subcontractor" },
-        ],
-        placeholder: "Select vendor type",
-      },
-      {
-        name: "GST_number",
-        label: "GST Number",
-        type: "text",
-        placeholder: "e.g., 27AABCS1234F1Z5",
-      },
-      {
-        name: "contact_no",
-        label: "Contact Number",
-        type: "text",
-        placeholder: "+91 98765 43210",
-      },
-      {
-        name: "email",
-        label: "Email",
-        type: "text",
-        placeholder: "vendor@example.com",
-      },
-      {
-        name: "status",
-        label: "Active",
-        type: "switch",
-        fullWidth: true,
-      },
-    ],
-  },
-];
+
 
 
 const projects = [
@@ -147,12 +100,14 @@ const projectModal = useModal();   // For Material Inventory
 const navigate = useNavigate();
 
  const [formData, setFormData] = useState({
-  name: "",
-  vendor_type: "",
-  GST_number: "",
-  contact_no: "",
-  email: "",
-  status: true,
+  vendor_name: "",
+  category_id: "",
+  contact_number: "",
+  email_address: "",
+  address: "",
+  gst_number: "",
+  pan_number: "",
+    status: true,
 });
 
   
@@ -177,13 +132,86 @@ const navigate = useNavigate();
 const createVendor = useMutation({
   mutationFn: (payload) => postFetch("/vendor", payload),
   onSuccess: () => {
-    queryClient.invalidateQueries(["vendors"]);
+    queryClient.invalidateQueries({ queryKey: ["vendors"] });
     alert("Vendor created!");
-    vendorModal.closeModal();
+    materialModal.closeModal();
   },
   onError: (err) => console.log(err),
 });
+const { data: categoryData, isLoading: categoryLoading } = useQuery({
+  queryKey: ["vendor-categories"],
+  queryFn: () =>
+    axiosGet("/category", {
+      params: { page: 1, limit: 100 },
+    }),
+});
+console.log(categoryData,"categoryData");
 
+const categoryOptions =
+  categoryData?.categories?.map((cat: any) => ({
+    label: cat.name,
+    value: String(cat.id), // or cat.id if backend expects ID
+  })) || [];
+
+const vendorModalFields = [
+  {
+    heading: "Vendor Details",
+    items: [
+      {
+        name: "vendor_name",
+        label: "Enter vendor name",
+        type: "text",
+        placeholder: "Enter vendor name",
+      },
+      {
+        name: "contact_number",
+        label: "Contact Number",
+        type: "text",
+        placeholder: "+91 98765 43210",
+      },
+       {
+        name: "email_address",
+        label: "Email",
+        type: "text",
+        placeholder: "vendor@example.com",
+      },
+      
+      {
+        name: "category_id",
+        label: "Category",
+        type: "select",
+        options: categoryOptions,
+        placeholder: categoryLoading ? "Loading categories..." : "Select vendor category",
+  loading: categoryLoading,
+      },
+      {
+        name: "gst_number",
+        label: "GST Number",
+        type: "text",
+        placeholder: "e.g., 27AABCS1234F1Z5",
+      },
+       {
+        name: "pan_number",
+        label: "PAN Number",
+        type: "text",
+        placeholder: "e.g., AABCS1234F",
+      },
+      {
+        name: "address",
+        label: "Address",
+        type: "textarea",
+        placeholder: "complete address with city and pincode",
+        fullWidth: true,
+      },
+      {
+        name: "status",
+        label: "Active",
+        type: "switch",
+        fullWidth: true,
+      },
+    ],
+  },
+];
 
 // --- React Query GET API ---
 const { data: vendorData, isLoading, isError } = useQuery({
@@ -193,32 +221,35 @@ const { data: vendorData, isLoading, isError } = useQuery({
 
 // --- Transform API Response ---
 const tableData =
-  vendorData?.vendors?.map((item) => ({
+  vendorData?.data?.map((item: any) => ({
     id: item.id,
-    name: item.name,
-    vendor_type: item.vendor_type,
-    GST_number: item.GST_number,
-    contact_no: item.contact_no,
-    email: item.email,
+    name: item.vendor_name,
+    vendor_type:item.category.name,
+    category_id: item.category_id,
+    GST_number: item.gst_number,
+    contact_no: item.contact_number,
+    email: item.email_address,
     rating: item.rating || "4.5",  // (optional static)
     status: item.status,
   })) || [];
 
 
-const toISODate = (date) => {
+const toISODate = (date:any) => {
   if (!date) return null;
   return new Date(date).toISOString();
 };
 
  const handleSave = () => {
-    const payload = {
-      name: formData.name,
-      vendor_type: formData.vendor_type,
-      GST_number: formData.GST_number,
-      contact_no: formData.contact_no,
-      email: formData.email,
-      status: formData.status ? "active" : "inactive",
-    };
+     const payload = {
+    vendor_name: formData.vendor_name,
+    category_id: Number(formData.category_id),
+    contact_number: formData.contact_number,
+    email_address: formData.email_address,
+    address: formData.address,
+    gst_number: formData.gst_number,
+    pan_number: formData.pan_number,
+    status: formData.status ? "ACTIVE" : "INACTIVE",
+  };
 
     createVendor.mutate(payload);
   };
@@ -254,7 +285,7 @@ const toISODate = (date) => {
   const handleView = (row: any) => {
 // route to selected project
     console.log(row)
-      navigate(`/project-detail/${row.id}`, {
+      navigate(`/vendor-detail/${row.id}`, {
     state: { row },        // Optional: Pass full object
   });
   };
@@ -265,14 +296,17 @@ const toISODate = (date) => {
   });
   }
   const handleEdit = (row) => {
-    setFormData({
-      name: row.name,
-      vendor_type: row.vendor_type,
-      GST_number: row.GST_number,
-      contact_no: row.contact_no,
-      email: row.email,
-      status: row.status === "active",
-    });
+   setFormData({
+    vendor_name: row.name,
+    category_id: row.category_id,
+    contact_number: row.contact_no,
+    email_address: row.email,
+    gst_number: row.GST_number,
+    pan_number: row.pan_number || "",
+    address: row.address || "",
+    payment_terms: row.payment_terms || "",
+    status: row.status === "ACTIVE",
+  });
 
     materialModal.openModal();
   };

@@ -36,6 +36,14 @@ import ManageModule from "./pages/ManageUserRole/ManageModule";
 import ManageUser from "./pages/ManageUserRole/ManageUser";
 import ManagePermission from "./pages/ManageUserRole/ManagePermission";
 import PermissionMatrix from "./pages/ManageUserRole/PermissionMatrix";
+import DprModule from "./pages/DPRModule/DprModule";
+import VendorDetails from "./pages/VendorManagement/VendorDetails";
+import DprDetail from "./pages/DPRModule/DprDetail";
+import PrCreate from "./pages/InventoryManagement/PrCreate";
+import PurchaseOrder from "./pages/InventoryManagement/PurchaseOrder";
+import GoodReceipt from "./pages/InventoryManagement/GoodReceipt";
+import ProtectedRoute from "./routes/ProtectedRoute";
+import PublicRoute from "./routes/PublicRoute";
 
 export default function App() {
   return (
@@ -44,6 +52,8 @@ export default function App() {
         <ScrollToTop />
         <Routes>
           {/* Dashboard Layout */}
+           {/* 🔐 PROTECTED AREA */}
+        <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
             <Route index path="/" element={<Dashboard1/>} />
              <Route index path="/master-creation" element={<MasterCreation/>} />
@@ -57,6 +67,12 @@ export default function App() {
 <Route index path="/manage-user" element={<ManageUser/>} />
 <Route index path="/manage-permission" element={<ManagePermission/>} />
 <Route index path="/role-permission" element={<PermissionMatrix/>} />
+<Route index path="/dpr-module" element={<DprModule/>} />
+<Route path="/vendor-detail/:id" element={<VendorDetails />} />
+<Route path="/dpr-detail/:id" element={<DprDetail />} />
+<Route index path="/pr-create" element={<PrCreate/>} />
+<Route index path="/purchase-order" element={<PurchaseOrder/>} />
+<Route index path="/good-receipt" element={<GoodReceipt/>} />
 
 {/* <Route index path="/dash" element={<Home/>} /> */}
 {/* <Route index path="/dash1" element={<Dashboard1/>} /> */}
@@ -88,11 +104,14 @@ export default function App() {
             <Route path="/line-chart" element={<LineChart />} />
             <Route path="/bar-chart" element={<BarChart />} />
           </Route>
+ </Route>
 
+        {/* 🌐 PUBLIC ROUTES */}
+        <Route element={<PublicRoute />}>
           {/* Auth Layout */}
           <Route path="/signin" element={<SignIn />} />
           <Route path="/signup" element={<SignUp />} />
-
+</Route>
           {/* Fallback Route */}
           <Route path="*" element={<NotFound />} />
         </Routes>

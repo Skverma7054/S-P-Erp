@@ -107,6 +107,29 @@ export default function CustomTable<T extends Record<string, any>>({
                           </div>
                         );
                       }
+if (col.key === "progress") {
+  const value = Number(row.progress || 0);
+
+  return (
+    <div className="w-full">
+      <div className="h-2 w-full bg-gray-200 rounded-full">
+        <div
+          className={`h-2 rounded-full ${
+            value >= 75
+              ? "bg-green-500"
+              : value >= 40
+              ? "bg-yellow-500"
+              : "bg-red-500"
+          }`}
+          style={{ width: `${value}%` }}
+        />
+      </div>
+      <span className="text-xs text-gray-500 mt-1 inline-block">
+        {value}%
+      </span>
+    </div>
+  );
+}
 
                       if (col.name === "avatar") {
                         const name = row[col.key] || row.user?.name || "User";

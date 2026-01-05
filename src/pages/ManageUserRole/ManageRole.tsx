@@ -6,12 +6,12 @@ import CustomModal from "../../customComponent/CustomModal/CustomModal";
 import { Plus } from "lucide-react";
 import { useModal } from "../../hooks/useModal";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { axiosGet, postFetch } from "../../api/apiServices";
+import { axiosGet, axiosPatch, postFetch } from "../../api/apiServices";
 
 const columns = [
   { key: "name", label: "Role Name" },
   { key: "description", label: "Description" },
-  { key: "permissions", label: "Permissions" },
+{ key: "permissionsText", label: "Permissions" },
   {
     key: "action",
     label: "Actions",
@@ -19,6 +19,29 @@ const columns = [
   },
 ];
 
+
+
+export default function ManageRole() {
+  const modal = useModal();
+  const queryClient = useQueryClient();
+
+  const [formData, setFormData] = useState({
+    id: null,
+    name: "",
+    description: "",
+   permissionIds: [] as string[], // ✅ STRING ARRAY
+  });
+
+  const { data: permData } = useQuery({
+  queryKey: ["permissions"],
+  queryFn: () => axiosGet("/permission?page=1&limit=200"),
+});
+
+const permissionOptions =
+  permData?.permissions?.map((p) => ({
+    label: `${p.id} - ${p.modules.map((m) => m.Name).join(", ")} (${p.action.join(", ")})`,
+    value: String(p.id),
+  })) || [];
 const roleModalFields = [
   {
     heading: "Role Details",
@@ -37,27 +60,18 @@ const roleModalFields = [
         fullWidth: true,
       },
       {
-        name: "permissionIds",
-        label: "Permission IDs",
-        type: "text",
-        placeholder: "e.g. 1,2,3",
-        fullWidth: true,
-      },
+  name: "permissionIds",
+  label: "Select Permissions",
+  type: "multiselect",
+  options: permissionOptions,
+   multiple: true,          // ⭐ important
+  placeholder: "Select permissions",
+  fullWidth: true,
+}
+
     ],
   },
 ];
-
-export default function ManageRole() {
-  const modal = useModal();
-  const queryClient = useQueryClient();
-
-  const [formData, setFormData] = useState({
-    id: null,
-    name: "",
-    description: "",
-    permissionIds: "",
-  });
-
   // FETCH ROLES -------------------------------
   const { data: roleData, isLoading } = useQuery({
     queryKey: ["roles"],
@@ -65,18 +79,25 @@ export default function ManageRole() {
   });
 
   const tableData =
-    roleData?.roles?.map((r) => ({
-      id: r.id,
-      name: r.name,
-      description: r.description,
-      permissions: r.permissionIds?.join(", "),
-    })) || [];
+  roleData?.roles?.map((r) => ({
+    id: r.id,
+    name: r.name,
+    description: r.description,
+    // ONLY TEXT shown in table
+    permissionsText: r.permissions
+      ?.map((p) => `${p.modules.map((m) => m.Name).join(", ")} (${p.action.join(", ")})`)
+      .join(" | "),
+
+    // INTERNAL permission ID list (hidden from UI)
+    permissionIds: r.permissions?.map((p) => p.id) || [],
+  })) || [];
+
 
   // CREATE ROLE -------------------------------
   const createRole = useMutation({
     mutationFn: (payload) => postFetch("/role", payload),
     onSuccess: () => {
-      queryClient.invalidateQueries(["roles"]);
+      queryClient.invalidateQueries({ queryKey:["roles"]});
       modal.closeModal();
     },
   });
@@ -84,9 +105,9 @@ export default function ManageRole() {
   // UPDATE ROLE -------------------------------
   const updateRole = useMutation({
     mutationFn: (payload) =>
-      postFetch(`/role/${formData.id}`, payload, "PATCH"),
+      axiosPatch(`/role/${formData.id}`, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries(["roles"]);
+      queryClient.invalidateQueries({ queryKey:["roles"]});
       modal.closeModal();
     },
   });
@@ -95,9 +116,11 @@ export default function ManageRole() {
   const deleteRole = useMutation({
     mutationFn: (id) => postFetch(`/role/${id}`, {}, "DELETE"),
     onSuccess: () => {
-      queryClient.invalidateQueries(["roles"]);
+      queryClient.invalidateQueries({ queryKey:["roles"]});
     },
   });
+// FETCH PERMISSIONS -------------------------------
+
 
   // HANDLERS -----------------------------------
   const handleAddRole = () => {
@@ -105,18 +128,22 @@ export default function ManageRole() {
       id: null,
       name: "",
       description: "",
-      permissionIds: "",
+     permissionIds: [], // ✅ array
     });
     modal.openModal();
   };
 
   const handleEdit = (row) => {
+    console.log(row,"Handle Edit");
+    
     setFormData({
       id: row.id,
       name: row.name,
       description: row.description,
-      permissionIds: row.permissions,
-    });
+    permissionIds: (row.permissionIds || []).map(String),
+
+
+    }); 
     modal.openModal();
   };
 
@@ -125,14 +152,19 @@ export default function ManageRole() {
       deleteRole.mutate(row.id);
     }
   };
+const handleInput = (name, value) => {
+  console.log(name,value, "Handle Input")
+  setFormData((prev) => ({
+    ...prev,
+    [name]: value,
+  }));
+};
 
   const handleSave = () => {
     const payload = {
       name: formData.name,
       description: formData.description,
-      permissionIds: formData.permissionIds
-        .split(",")
-        .map((n) => Number(n.trim())),
+       permissionIds: formData.permissionIds.map(Number),
     };
 
     if (formData.id) {
@@ -174,6 +206,7 @@ export default function ManageRole() {
         closeModal={modal.closeModal}
         fields={roleModalFields}
         formData={formData}
+        handleInput={handleInput}
         setFormData={setFormData}
         handleSave={handleSave}
         title={formData.id ? "Edit Role" : "Create Role"}

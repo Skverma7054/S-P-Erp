@@ -12,19 +12,21 @@ import { axiosGet, postFetch } from "../../api/apiServices";
 
 const columns = [
   { key: "projectName", label: "Project Name" },
+  { key: "projectType", label: "Type" , badge:true },
   { key: "code", label: "Code" },
   { key: "location", label: "Location" },
-  { key: "chainage", label: "Chainage" },
   { key: "startDate", label: "Start Date" },
   { key: "endDate", label: "End Date" },
   { key: "manager", label: "Manager" },
+   { key: "progress", label: "Progress (%)" }, // ✅ ADD THIS
   { key: "status", label: "Status" },
   {
     key: "action",
     label: "Actions",
-    showIcon: { view: true ,admin:true},
+    showIcon: { view: true, admin: true },
   },
 ];
+
 
 
 const data = [
@@ -68,6 +70,17 @@ const projectModalFields = [
     heading: "Project Details",
     items: [
       {
+      name: "projectType",
+      label: "Project Type",
+      type: "select",
+      options: [
+        { label: "HAM", value: "HAM" },
+        { label: "EPC", value: "EPC" },
+        { label: "BOT", value: "BOT" },
+      ],
+      required: true,
+    },
+      {
         name: "projectName",
         label: "Project Name",
         type: "text",
@@ -98,17 +111,33 @@ const projectModalFields = [
         placeholder: "dd-mm-yyyy",
       },
       {
-        name: "chainageStart",
-        label: "Chainage Start (km)",
-        type: "number",
-        placeholder: "0",
-      },
-      {
-        name: "chainageEnd",
-        label: "Chainage End (km)",
-        type: "number",
-        placeholder: "45.5",
-      },
+      name: "budget",
+      label: "Project Budget",
+      type: "number",
+    },
+    {
+      name: "client",
+      label: "Client",
+      type: "text",
+    },
+    {
+      name: "description",
+      label: "Description",
+      type: "textarea",
+      fullWidth: true,
+    },
+      // {
+      //   name: "chainageStart",
+      //   label: "Chainage Start (km)",
+      //   type: "number",
+      //   placeholder: "0",
+      // },
+      // {
+      //   name: "chainageEnd",
+      //   label: "Chainage End (km)",
+      //   type: "number",
+      //   placeholder: "45.5",
+      // },
       {
         name: "manager",
         label: "Project Manager",
@@ -117,6 +146,52 @@ const projectModalFields = [
       },
     ],
   },
+
+  {
+  heading: "HAM Details",
+  showIf: { field: "projectType", value: "HAM" },
+  items: [
+    { name: "annuityAmount", label: "Annuity Amount", type: "number" },
+    { name: "annuityPeriod", label: "Annuity Period (Years)", type: "number" },
+    { name: "constructionPeriod", label: "Construction Period (Months)", type: "number" },
+    {
+      name: "maintenanceResponsibility",
+      label: "Maintenance Responsibility",
+      type: "text",
+      fullWidth: true,
+    },
+  ],
+},
+{
+  heading: "EPC Details",
+  showIf: { field: "projectType", value: "EPC" },
+  items: [
+    { name: "engineeringScope", label: "Engineering Scope", type: "text" },
+    { name: "procurementBudget", label: "Procurement Budget", type: "number" },
+    { name: "constructionTimeline", label: "Construction Timeline", type: "text" },
+    { name: "performanceGuarantee", label: "Performance Guarantee", type: "text" },
+  ],
+},
+{
+  heading: "BOT Details",
+  showIf: { field: "projectType", value: "BOT" },
+  items: [
+    { name: "concessionPeriod", label: "Concession Period (Years)", type: "number" },
+    { name: "estimatedOperatingCost", label: "Estimated Operating Cost", type: "number" },
+    {
+      name: "tollRevenueEnabled",
+      label: "Toll Revenue Collection Enabled",
+      type: "switch",
+      fullWidth: true,
+    },
+    {
+      name: "transferCondition",
+      label: "Transfer Condition",
+      type: "text",
+      fullWidth: true,
+    },
+  ],
+},
 {
     heading: "",        
     items: [
@@ -130,7 +205,7 @@ const projectModalFields = [
   },
   {
     heading: "Outsourcing Details",
-     showIf: "enableOutsource", 
+     showIf: { field: "enableOutsource", value: true },
     items: [
     
     {
@@ -185,6 +260,7 @@ const projectModalFields = [
       },
     ],
   },
+
 ];
 
 
@@ -197,16 +273,20 @@ const queryClient = useQueryClient();
   const materialModal = useModal();  // For Add / Edit material
 const projectModal = useModal();   // For Material Inventory
 const navigate = useNavigate();
-
-  const [formData, setFormData] = useState({
+const initialFormState = {
+  projectType: "",
   projectName: "",
   projectCode: "",
   location: "",
   startDate: "",
   endDate: "",
-  chainageStart: "",
-  chainageEnd: "",
+  budget: "",
+  client: "",
+  description: "",
+  status: "PLANNED",
+  progress: 0,
   manager: "",
+
   enableOutsource: false,
   subcontractor: "",
   scope: "",
@@ -215,7 +295,69 @@ const navigate = useNavigate();
   chainageOutsourceEnd: "",
   startOutsourceDate: "",
   endOutsourceDate: "",
+
+  annuityAmount: "",
+  annuityPeriod: "",
+  constructionPeriod: "",
+  maintenanceResponsibility: "",
+
+  engineeringScope: "",
+  procurementBudget: "",
+  constructionTimeline: "",
+  performanceGuarantee: "",
+  epcProgress: 0,
+
+  concessionPeriod: "",
+  estimatedOperatingCost: "",
+  tollRevenueEnabled: false,
+  transferCondition: "",
+};
+
+  const [formData, setFormData] = useState({
+  projectType: "",
+
+  projectName: "",
+  projectCode: "",
+  location: "",
+  startDate: "",
+  endDate: "",
+  budget: "",
+  client: "",
+  description: "",
+  status: "PLANNED",
+  progress: 0,
+
+  manager: "",
+
+  enableOutsource: false,
+  subcontractor: "",
+  scope: "",
+  contractValue: "",
+  chainageOutsourceStart: "",
+  chainageOutsourceEnd: "",
+  startOutsourceDate: "",
+  endOutsourceDate: "",
+
+  // HAM
+  annuityAmount: "",
+  annuityPeriod: "",
+  constructionPeriod: "",
+  maintenanceResponsibility: "",
+
+  // EPC
+  engineeringScope: "",
+  procurementBudget: "",
+  constructionTimeline: "",
+  performanceGuarantee: "",
+  epcProgress: 0,
+
+  // BOT
+  concessionPeriod: "",
+  estimatedOperatingCost: "",
+  tollRevenueEnabled: false,
+  transferCondition: "",
 });
+
 
   const projects = [
     { id: "p1", name: "NH-44 Highway Extension" },
@@ -230,35 +372,17 @@ const navigate = useNavigate();
     // alert("Material Inventory clicked!");
   };
   const handleCreateProject = () => {
-  setFormData({
-  projectName: "",
-  projectCode: "",
-  location: "",
-  startDate: "",
-  endDate: "",
-  chainageStart: "",
-  chainageEnd: "",
-  manager: "",
-  enableOutsource: false,
-  subcontractor: "",
-  scope: "",
-  contractValue: "",
-  chainageOutsourceStart: "",
-  chainageOutsourceEnd: "",
-  startOutsourceDate: "",
-  endOutsourceDate: "",
-});
-materialModal.openModal();
-
-  // openModal();
+  setFormData(initialFormState);
+  materialModal.openModal();
 };
+
 const createProject = useMutation({
   mutationFn: (payload) => postFetch("/project", payload),
   onSuccess: (data) => {
     console.log(data)
     alert("Project created successfully!");
      // 🔥 REFRESH TABLE DATA
-    queryClient.invalidateQueries(["projects"]);
+    queryClient.invalidateQueries({ queryKey: ["projects"] });
     materialModal.closeModal();
   },
   onError: (error) => {
@@ -275,40 +399,84 @@ const { data: projectData, isLoading, isError } = useQuery({
 });
 console.log(projectData,"projectData------")
 // --- Transform API Response ---
+const getProjectProgress = (item) => {
+  if (item.project_type === "HAM") {
+    return item.ham_details?.progress ?? 0;
+  }
+  if (item.project_type === "EPC") {
+    return item.epc_details?.progress ?? 0;
+  }
+  if (item.project_type === "BOT") {
+    return item.bot_details?.progress ?? 0;
+  }
+  return 0;
+};
+
 const tableData =
-  projectData?.projects
+  projectData?.data
 ?.map((item) => ({
-    id: item.id,
-    projectName: item.name,
+   id: item.id,
+    projectName: item.project_name,
+    projectType: item.project_type,
     code: item.project_code,
     location: item.location,
-    chainage: `${item.chainage_start_km} - ${item.chainage_end_km} km`,
-    startDate: item.start_date,
-    endDate: item.end_date,
+    startDate: item.start_date?.split("T")[0],
+    endDate: item.end_date?.split("T")[0],
     manager: item.project_manager,
+    progress: getProjectProgress(item), // ✅ HERE
     status: item.status,
   })) || [];
-
 const toISODate = (date) => {
   if (!date) return null;
   return new Date(date).toISOString();
 };
 
   const handleSave = () => {
-  const payload = {
-    name: formData.projectName,
+  const payload: any = {
+    project_type: formData.projectType,
+    project_name: formData.projectName,
     project_code: formData.projectCode,
     location: formData.location,
-   start_date: toISODate(formData.startDate),     // <-- converted
-    end_date: toISODate(formData.endDate),         // <-- converted
-    chainage_start_km: formData.chainageStart,
-    chainage_end_km: formData.chainageEnd,
-    total_length_km: String(
-      Number(formData.chainageEnd || 0) - Number(formData.chainageStart || 0)
-    ),
+    start_date: toISODate(formData.startDate),
+    end_date: toISODate(formData.endDate),
+    budget: formData.budget,
+    status: formData.status,
+    client: formData.client,
     project_manager: formData.manager,
-    status: "active",
+    description: formData.description,
+    progress: Number(formData.progress || 0),
   };
+
+  if (formData.projectType === "HAM") {
+    payload.ham_details = {
+      annuity_amount: formData.annuityAmount,
+      annuity_period: Number(formData.annuityPeriod),
+      construction_period: Number(formData.constructionPeriod),
+      maintenance_responsibility: formData.maintenanceResponsibility,
+      progress: 0,
+    };
+  }
+
+  if (formData.projectType === "EPC") {
+    payload.epc_details = {
+      engineering_scope: formData.engineeringScope,
+      procurement_budget: formData.procurementBudget,
+      construction_timeline: formData.constructionTimeline,
+      performance_guarantee: formData.performanceGuarantee,
+      progress: Number(formData.epcProgress || 0),
+    };
+  }
+
+  if (formData.projectType === "BOT") {
+    payload.bot_details = {
+      concession_period: Number(formData.concessionPeriod),
+      estimated_operating_cost: formData.estimatedOperatingCost,
+      toll_revenue_collection_enabled: formData.tollRevenueEnabled,
+      transfer_condition: formData.transferCondition,
+    };
+  }
+
+   
 
   createProject.mutate(payload);
 };
@@ -356,26 +524,19 @@ const toISODate = (date) => {
   }
  const handleEdit = (row) => {
   setFormData({
+    ...initialFormState,
     projectName: row.projectName,
     projectCode: row.code,
     location: row.location,
     startDate: row.startDate,
     endDate: row.endDate,
-    chainageStart: row.chainage.split(" - ")[0],
-    chainageEnd: row.chainage.split(" - ")[1]?.replace(" km",""),
     manager: row.manager,
-    enableOutsource: false,  // depends on your API
-    subcontractor: "",
-    scope: "",
-    contractValue: "",
-    chainageOutsourceStart: "",
-    chainageOutsourceEnd: "",
-    startOutsourceDate: "",
-    endOutsourceDate: "",
+    projectType: row.project_type, // must come from API
   });
 
   materialModal.openModal();
 };
+
 
   const handleDelete = (row: any) => alert(`Deleting: ${row.user.name}`);
   const handleExport = () => {
@@ -418,22 +579,18 @@ onAdmin={handleAdminClick}
         </ComponentCardWthBtns>
       </div>
       <CustomModal
-        isOpen={materialModal.isOpen}
-        closeModal={materialModal.closeModal}
-        handleSave={handleSave}
-       title={formData.name ? "Edit Material" : "Add New Material"}
+  isOpen={materialModal.isOpen}
+  closeModal={materialModal.closeModal}
+  handleSave={handleSave}
+  title={formData.projectName ? "Edit Project" : "Create New Project"}
+  subtitle="Fill the details below to create a project"
+  fields={projectModalFields}
+  formData={formData}
+  setFormData={setFormData}
+  saveText={formData.projectName ? "Update Project" : "Create Project"}
+  closeText="Cancel"
+/>
 
-subtitle="Fill the details below to create a project"
-        fields={projectModalFields}
-        formData={formData}
-        setFormData={setFormData}
-title={formData.projectName ? "Edit Project" : "Create New Project"}
-// closeText={formData.name ? "Edit Material" : "Add New Material"}
-saveText={formData.projectName ? "Update Project" : "Create Project"}
-
-        // saveText="Save Material"
-        closeText="Cancel"
-      />
       <CustomSelectModal
       
       projects={projects}

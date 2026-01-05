@@ -67,7 +67,7 @@ export default function ManageUnit() {
   const createUnit = useMutation({
     mutationFn: (payload) => postFetch("/unit", payload),
     onSuccess: () => {
-      queryClient.invalidateQueries(["units"]);
+      queryClient.invalidateQueries({ queryKey:["units"]});
       modal.closeModal();
       alert("Unit created successfully!");
     },

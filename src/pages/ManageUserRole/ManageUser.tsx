@@ -23,54 +23,7 @@ const columns = [
   },
 ];
 
-// -------------------------------------------------
-// MODAL FIELDS
-// -------------------------------------------------
-const userModalFields = [
-  {
-    heading: "User Details",
-    items: [
-      {
-        name: "name",
-        label: "Full Name",
-        type: "text",
-        placeholder: "Enter full name",
-      },
-      {
-        name: "email",
-        label: "Email",
-        type: "text",
-        placeholder: "Enter email address",
-      },
-      {
-        name: "password",
-        label: "Password",
-        type: "text",
-        placeholder: "Enter password",
-        showIf: (data) => !data.id, // show only on create
-      },
-      {
-        name: "mobileNumber",
-        label: "Mobile Number",
-        type: "text",
-        placeholder: "+91 9876543210",
-      },
-      {
-        name: "roleId",
-        label: "Select Role",
-        type: "select",
-        placeholder: "Choose role",
-        options: [], // dynamically filled
-      },
-      {
-        name: "fileId",
-        label: "File ID",
-        type: "number",
-        placeholder: "Enter File ID",
-      },
-    ],
-  },
-];
+
 
 export default function ManageUser() {
   const modal = useModal();
@@ -101,7 +54,7 @@ export default function ManageUser() {
       email: u.email,
       mobileNumber: u.mobileNumber,
       roleId: u.roleId,
-      roleName: u.role?.Name,
+      roleName: u.role?.name,
     })) || [];
 
   // -------------------------------------------------
@@ -115,11 +68,59 @@ export default function ManageUser() {
   const roles =
     roleApi?.roles?.map((r) => ({
       label: r.name,
-      value: r.id,
+      value: String(r.id),
     })) || [];
-
+// -------------------------------------------------
+// MODAL FIELDS
+// -------------------------------------------------
+const userModalFields = [
+  {
+    heading: "User Details",
+    items: [
+      {
+        name: "name",
+        label: "Full Name",
+        type: "text",
+        placeholder: "Enter full name",
+      },
+      {
+        name: "email",
+        label: "Email",
+        type: "text",
+        placeholder: "Enter email address",
+      },
+      {
+        name: "password",
+        label: "Password",
+        type: "text",
+         hideOnEdit: true,
+        placeholder: "Enter password",
+        
+      },
+      {
+        name: "mobileNumber",
+        label: "Mobile Number",
+        type: "text",
+        placeholder: "+91 9876543210",
+      },
+      {
+        name: "roleId",
+        label: "Select Role",
+        type: "select",
+        placeholder: "Choose role",
+        options: roles, // dynamically filled
+      },
+      {
+        name: "fileId",
+        label: "File ID",
+        type: "number",
+        placeholder: "Enter File ID",
+      },
+    ],
+  },
+];
   // Inject role options into modal dynamically
-  userModalFields[0].items.find((f) => f.name === "roleId").options = roles;
+  // userModalFields[0].items.find((f) => f.name === "roleId").options = roles;
 
   // -------------------------------------------------
   // CREATE USER
@@ -127,7 +128,7 @@ export default function ManageUser() {
   const createUser = useMutation({
     mutationFn: (payload) => postFetch("/user/register", payload),
     onSuccess: () => {
-      queryClient.invalidateQueries(["users"]);
+      queryClient.invalidateQueries({ queryKey:["users"]});
       modal.closeModal();
     },
   });
@@ -139,7 +140,7 @@ export default function ManageUser() {
     mutationFn: (payload) =>
       axiosPatch(`/user/users/${formData.id}`, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries(["users"]);
+      queryClient.invalidateQueries({ queryKey:["users"]});
       modal.closeModal();
     },
   });
@@ -150,7 +151,7 @@ export default function ManageUser() {
   const deleteUser = useMutation({
     mutationFn: (id) => axiosDelete(`/user/users/${id}`),
     onSuccess: () => {
-      queryClient.invalidateQueries(["users"]);
+      queryClient.invalidateQueries({ queryKey:["users"]});
     },
   });
 
@@ -170,7 +171,13 @@ export default function ManageUser() {
     });
     modal.openModal();
   };
-
+const handleInput = (name, value) => {
+  console.log(name,value, "Handle Input")
+  setFormData((prev) => ({
+    ...prev,
+    [name]: value,
+  }));
+};
   const handleEdit = (row) => {
     setFormData({
       id: row.id,
@@ -199,8 +206,8 @@ export default function ManageUser() {
       name: formData.name,
       email: formData.email,
       mobileNumber: formData.mobileNumber,
-      roleId: formData.roleId,
-      fileId: Number(formData.fileId),
+      roleId: Number(formData.roleId),
+      // fileId: Number(formData.fileId),
     };
 
     if (!formData.id) {
@@ -239,6 +246,7 @@ export default function ManageUser() {
         closeModal={modal.closeModal}
         fields={userModalFields}
         formData={formData}
+        handleInput={handleInput}
         setFormData={setFormData}
         handleSave={handleSave}
         title={formData.id ? "Edit User" : "Create User"}
