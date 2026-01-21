@@ -26,10 +26,24 @@ const columns = [
     showIcon: { edit: true, delete: true },
   },
 ];
+const pendingGrnColumns = [
+  { key: "po_code", label: "PO Code" },
+  { key: "gate_entry_number", label: "Gate Entry" },
+  { key: "vehicle_number", label: "Vehicle" },
+  { key: "store_location", label: "Store" },
+  { key: "received_date", label: "Received Date" },
+  {
+    key: "action",
+    label: "Actions",
+    showIcon: { edit: true },
+  },
+];
 
 export default function GoodReceipt() {
   const queryClient = useQueryClient();
   const grnModal = useModal();
+const [searchText, setSearchText] = useState("");
+const [grnStatus, setGrnStatus] = useState("PENDING");
 
   /* ---------------- FORM STATE ---------------- */
   const [formData, setFormData] = useState({
@@ -104,14 +118,14 @@ export default function GoodReceipt() {
     {
       heading: "Gate Entry & Basic Information",
       items: [
-        {
-          name: "po_id",
-          label: "Purchase Order",
-          type: "select",
-          options: poOptions,
-          placeholder: "Select PO",
-          loading: poLoading,
-        },
+        // {
+        //   name: "po_id",
+        //   label: "Purchase Order",
+        //   type: "select",
+        //   options: poOptions,
+        //   placeholder: "Select PO",
+        //   loading: poLoading,
+        // },
         {
           name: "gate_entry_number",
           label: "Gate Entry Number",
@@ -234,6 +248,30 @@ export default function GoodReceipt() {
         sort_order: "desc",
       }),
   });
+  const {
+  data: pendingGrnData,
+  isLoading: pendingGrnLoading,
+} = useQuery({
+  queryKey: ["pending-grn-list", searchText, grnStatus],
+  queryFn: () =>
+    AxiosGetWithParams("/grn", {
+      quality_check_completed: grnStatus === "PENDING" ? false : true,
+      search: searchText || undefined,
+      page: 1,
+      limit: 10,
+    }),
+});
+
+const pendingGrnTableData =
+  pendingGrnData?.data?.map((grn) => ({
+    id: grn.id,
+    po_code: grn.purchase_order.po_code,
+    gate_entry_number: grn.gate_entry_number,
+    vehicle_number: grn.vehicle_number,
+    store_location: grn.store_location,
+    received_date: new Date(grn.received_date).toLocaleDateString(),
+    raw: grn, // ✅ keep full object
+  })) || [];
 
   const tableData =
     grnData?.data?.map((grn) => ({
@@ -246,6 +284,27 @@ export default function GoodReceipt() {
       store_location: grn.store_location,
       quality_check_completed: grn.quality_check_completed ? "Yes" : "No",
     })) || [];
+const handleResumeGrn = (row) => {
+  const grn = row.raw;
+
+  setFormData({
+    po_id: String(grn.purchase_order.id),
+    gate_entry_number: grn.gate_entry_number,
+    vehicle_number: grn.vehicle_number,
+    driver_name: grn.driver_name,
+    driver_contact: grn.driver_contact,
+    transport_mode: grn.transport_mode,
+    received_date: grn.received_date.split("T")[0],
+    received_time: grn.received_time,
+    store_location: grn.store_location,
+    quality_check_completed: grn.quality_check_completed,
+    inspected_by: grn.inspected_by || "",
+    grn_remarks: grn.grn_remarks || "",
+    material_receipts: grn.material_receipts,
+  });
+
+  grnModal.openModal();
+};
 
   /* ---------------- SAVE ---------------- */
   const handleSave = () => {
@@ -324,6 +383,24 @@ const handleUpdateMaterialItem = (groupName, rowIndex, fieldName, value) => {
           },
         ]}
       />
+<ComponentCardWthBtns
+  title="Pending Goods Receipt Notes"
+  desc="Search and complete pending GRNs"
+  showSearch
+  showDropdown
+  dropdownOptions={[
+    { label: "Pending QC", value: "PENDING" },
+    { label: "QC Completed", value: "COMPLETED" },
+  ]}
+  onDropdownChange={(value) => setGrnStatus(value)}
+>
+  <CustomTable
+    columns={pendingGrnColumns}
+    data={pendingGrnTableData}
+    loading={pendingGrnLoading}
+    onEdit={(row) => handleResumeGrn(row)}
+  />
+</ComponentCardWthBtns>
 
       <ComponentCardWthBtns title="GRN Records">
         <CustomTable

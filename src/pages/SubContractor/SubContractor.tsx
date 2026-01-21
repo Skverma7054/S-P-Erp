@@ -5,6 +5,16 @@ import ProgressCard from "../../customComponent/Cards/ProgressCard";
 import { useLocation } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { axiosGet } from "../../api/apiServices";
+type DashMetric = {
+  id: string;
+  title: string;
+  value: string;
+  gradient?: string;
+  bgColor?: string;
+  borderColor?: string;
+  iconBg?: string;
+  textColor?: string;
+};
 
 const cards = [
   {
@@ -38,7 +48,7 @@ export default function SubContractor() {
   const project = location.state?.row; // From previous page
   const subcontractorId = project?.id;
 
-  const [metrics, setMetrics] = useState([]);
+const [metrics, setMetrics] = useState<DashMetric[]>([]);
 
   // ---------------------------------------------------------------------
   // 🔥 API: Get subcontractor details
@@ -134,7 +144,7 @@ console.log(subcontractor,isLoading,"subcontractor")
       <div className="space-y-6 mt-6">
 
         {subcontractorCardData.length === 0 && isLoading && (
-  <ProgressCard loading />
+  <ProgressCard loading={false} />
 )}
 
 {subcontractorCardData.length > 0 &&

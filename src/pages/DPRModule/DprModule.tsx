@@ -9,6 +9,19 @@ import CustomSelectModal from "../../customComponent/CustomModal/CustomSelectMod
 import { useNavigate } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { axiosGet, postFetch } from "../../api/apiServices";
+type VendorFormData = {
+  name: string;
+  vendor_type: string;
+  GST_number: string;
+  contact_no: string;
+  email: string;
+  status: boolean;
+};
+
+type TableRow = {
+  id: number;
+  [key: string]: any;
+};
 
 const columns = [
   { key: "dpr_no", label: "DPR No" },
@@ -143,7 +156,7 @@ const queryClient = useQueryClient();
 const projectModal = useModal();   // For Material Inventory
 const navigate = useNavigate();
 
- const [formData, setFormData] = useState({
+ const [formData, setFormData] = useState<VendorFormData>({
   name: "",
   vendor_type: "",
   GST_number: "",
@@ -172,11 +185,11 @@ const navigate = useNavigate();
     materialModal.openModal();
   };
 const createVendor = useMutation({
-  mutationFn: (payload) => postFetch("/vendor", payload),
+  mutationFn: (payload: VendorFormData) => postFetch("/vendor", payload),
   onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ["vendors"] });
     alert("Vendor created!");
-    vendorModal.closeModal();
+    materialModal.closeModal(); // ✅ FIXED
   },
   onError: (err) => console.log(err),
 });
@@ -248,20 +261,20 @@ const toISODate = (date:any) => {
     //   onClick: () => console.log("Delete clicked"),
     // },
   ];
-  const handleView = (row: any) => {
+  const handleView = (row: TableRow) => {
 // route to selected project
     console.log(row)
       navigate(`/dpr-detail/${row.id}`, {
     state: { row },        // Optional: Pass full object
   });
   };
-  const handleAdminClick = (row:any)=>{
+  const handleAdminClick = (row:TableRow)=>{
     console.log(row,"handleAdminClick")
      navigate(`/sub-contractor/${row.id}`, {
     state: { row },        // Optional: Pass full object
   });
   }
-  const handleEdit = (row) => {
+  const handleEdit = (row:any) => {
     setFormData({
       name: row.name,
       vendor_type: row.vendor_type,
@@ -273,11 +286,12 @@ const toISODate = (date:any) => {
 
     materialModal.openModal();
   };
-  const handleDelete = (row: any) => alert(`Deleting: ${row.user.name}`);
-  const handleExport = () => {
-    alert(`Download: ${row.user.name}`);
-  };
- const handleProject = (row) => {
+  const handleDelete = (row: TableRow) => alert(`Deleting: ${row.user.name}`);
+  const handleExport = (row: TableRow) => {
+  alert(`Download vendor data: ${row.name}`);
+};
+
+ const handleProject = (row:TableRow) => {
     console.log(`handleProject: ${row}`);
     projectModal.closeModal();   // Close modal
   navigate(`/sub-vendor/${row.id}`, {

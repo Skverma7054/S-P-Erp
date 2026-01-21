@@ -1,4 +1,4 @@
-import { Edit, Eye, Inbox, Trash2, UserRoundSearch } from "lucide-react";
+import { Edit, Eye, Inbox, SquareMousePointer, Trash2, UserRoundSearch } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -329,6 +329,15 @@ if (col.key === "progress") {
                                 onClick={() => onEdit?.(row)}
                               >
                                 <Edit size={16} />
+                              </button>
+                            )}
+                            {col.showIcon?.select && (
+                              <button
+                                className="text-blue-600 hover:text-blue-800"
+                                title="Edit"
+                                onClick={() => onEdit?.(row)}
+                              >
+                                <SquareMousePointer  size={16} />
                               </button>
                             )}
                             {col.showIcon?.delete && (

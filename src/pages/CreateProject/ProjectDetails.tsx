@@ -6,6 +6,13 @@ import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import { useQuery } from "@tanstack/react-query";
 import { axiosGet } from "../../api/apiServices";
 import { useLocation } from "react-router";
+type MetricCard = {
+  id: string;
+  title: string;
+  value: string;
+  loading?: boolean;
+  [key: string]: any;
+};
 
 const cards = [
   {
@@ -53,7 +60,7 @@ export default function ProjectDetails() {
   console.log(project)
   const projectId = project?.id;
 
-  const [metrics, setMetrics] = useState([]);
+  const [metrics, setMetrics] =  useState<MetricCard[]>([]);
 
   // ---------- METRICS (CARDS) ---------
   useEffect(() => {

@@ -9,6 +9,16 @@ import CustomSelectModal from "../../customComponent/CustomModal/CustomSelectMod
 import { useNavigate } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { axiosGet, postFetch } from "../../api/apiServices";
+type VendorForm = {
+  vendor_name: string;
+  category_id: string;
+  contact_number: string;
+  email_address: string;
+  address: string;
+  gst_number: string;
+  pan_number: string;
+  status: boolean;
+};
 
 const columns = [
   { key: "name", label: "Vendor Name" },
@@ -99,7 +109,7 @@ const queryClient = useQueryClient();
 const projectModal = useModal();   // For Material Inventory
 const navigate = useNavigate();
 
- const [formData, setFormData] = useState({
+ const [formData, setFormData] = useState<VendorForm>({
   vendor_name: "",
   category_id: "",
   contact_number: "",
@@ -119,18 +129,22 @@ const navigate = useNavigate();
     // alert("Material Inventory clicked!");
   };
   const handleCreateVendor = () => {
-    setFormData({
-      name: "",
-      vendor_type: "",
-      GST_number: "",
-      contact_no: "",
-      email: "",
-      status: true,
-    });
-    materialModal.openModal();
-  };
+  setFormData({
+    vendor_name: "",
+    category_id: "",
+    contact_number: "",
+    email_address: "",
+    address: "",
+    gst_number: "",
+    pan_number: "",
+    status: true,
+  });
+
+  materialModal.openModal();
+};
+
 const createVendor = useMutation({
-  mutationFn: (payload) => postFetch("/vendor", payload),
+  mutationFn: (payload:any) => postFetch("/vendor", payload),
   onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ["vendors"] });
     alert("Vendor created!");
@@ -295,7 +309,7 @@ const toISODate = (date:any) => {
     state: { row },        // Optional: Pass full object
   });
   }
-  const handleEdit = (row) => {
+  const handleEdit = (row:any) => {
    setFormData({
     vendor_name: row.name,
     category_id: row.category_id,
@@ -304,7 +318,6 @@ const toISODate = (date:any) => {
     gst_number: row.GST_number,
     pan_number: row.pan_number || "",
     address: row.address || "",
-    payment_terms: row.payment_terms || "",
     status: row.status === "ACTIVE",
   });
 
@@ -312,9 +325,10 @@ const toISODate = (date:any) => {
   };
   const handleDelete = (row: any) => alert(`Deleting: ${row.user.name}`);
   const handleExport = () => {
-    alert(`Download: ${row.user.name}`);
-  };
- const handleProject = (row) => {
+  alert("Download triggered");
+};
+
+ const handleProject = (row:any) => {
     console.log(`handleProject: ${row}`);
     projectModal.closeModal();   // Close modal
   navigate(`/sub-vendor/${row.id}`, {
@@ -354,17 +368,21 @@ loading={isLoading}
         isOpen={materialModal.isOpen}
         closeModal={materialModal.closeModal}
         handleSave={handleSave}
-       title={formData.name ? "Edit Vendor" : "Add New Vendor"}
+       title={formData.vendor_name  ? "Edit Vendor" : "Add New Vendor"}
 
         subtitle="Fill the details below to add/update a vendor"
         fields={vendorModalFields}
         formData={formData}
         setFormData={setFormData}
-        saveText={formData.name ? "Update Vendor" : "Add Vendor"}
+        saveText={formData.vendor_name  ? "Update Vendor" : "Add Vendor"}
 // closeText={formData.name ? "Edit Material" : "Add New Material"}
 
         // saveText="Save Material"
         closeText="Cancel"
+        handleInput={() => {}}
+  onAddArrayItem={() => {}}
+  onUpdateArrayItem={() => {}}
+  onRemoveArrayItem={() => {}}
       />
       <CustomSelectModal
       

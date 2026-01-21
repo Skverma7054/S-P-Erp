@@ -14,6 +14,36 @@ import {
   AxiosGetWithParams,
 } from "../../api/apiServices";
 import { options } from "@fullcalendar/core/preact.js";
+type Option = {
+  label: string;
+  value: string;
+};
+
+type OrderItem = {
+  material_id: string | number;
+  material_code: string;
+  material_name: string;
+  quantity: string | number;
+  rate: string | number;
+  amount: string | number;
+};
+
+type POFormData = {
+  pr_id: string;
+  project_id: string;
+  vendor_id: string;
+  po_code: string;
+  po_date: string;
+  expected_delivery_date: string;
+  transport_mode: string;
+  payment_terms: string;
+  delivery_terms: string;
+  shipping_address: string;
+  billing_address: string;
+  remarks: string;
+  order_items: OrderItem[];
+  [key: string]: any; // ✅ allows dynamic access
+};
 
 /* ---------------- TABLE COLUMNS ---------------- */
 const columns = [
@@ -35,7 +65,7 @@ export default function PurchaseOrder() {
   const poModal = useModal();
 
   /* ---------------- FORM STATE ---------------- */
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<POFormData>({
     pr_id: "",
     project_id: "",
     vendor_id: "",
@@ -71,14 +101,14 @@ export default function PurchaseOrder() {
     queryFn: () => axiosGet("/vendor"),
   });
 
-  const projectOptions =
-    projectData?.data?.map((p) => ({
+  const projectOptions : Option[]=
+    projectData?.data?.map((p:any) => ({
       label: p.project_name,
       value: String(p.id),
     })) || [];
 
-  const vendorOptions =
-    vendorData?.data?.map((v) => ({
+  const vendorOptions:Option[] =
+    vendorData?.data?.map((v:any) => ({
       label: v.vendor_name,
       value: String(v.id),
     })) || [];
@@ -91,8 +121,8 @@ export default function PurchaseOrder() {
       }),
     enabled: !!formData.project_id, // ✅ ONLY RUN WHEN PROJECT SELECTED
   });
-  const prOptions =
-    prData?.data?.map((pr) => ({
+  const prOptions: Option[] =
+    prData?.data?.map((pr:any) => ({
       label: pr.pr_code,
       value: String(pr.id),
     })) || [];
@@ -108,7 +138,7 @@ export default function PurchaseOrder() {
     if (!selectedPR) return;
 
     // 🔹 Map PR material_items → PO order_items
-    const mappedItems = selectedPR.material_items.map((item) => ({
+    const mappedItems: OrderItem[] = selectedPR.material_items.map((item) => ({
       material_id: item.material.id,
       material_code: String(item.material.material_code),
 
@@ -285,7 +315,7 @@ export default function PurchaseOrder() {
 
   /* ---------------- CREATE PO ---------------- */
   const createPO = useMutation({
-    mutationFn: (payload) => postFetch("/po", payload),
+    mutationFn: (payload: any) => postFetch("/po", payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["po-list"] });
       alert("PO created successfully");
@@ -301,7 +331,7 @@ export default function PurchaseOrder() {
   });
 
   const tableData =
-    poData?.data?.map((item) => ({
+    poData?.data?.map((item: any) => ({
       id: item.id,
       po_code: item.po_code,
       project: item.project.project_name,
@@ -386,7 +416,7 @@ export default function PurchaseOrder() {
       },
     },
   ];
-  const handleAddItem = (groupName) => {
+  const handleAddItem = (groupName: string) => {
     setFormData((prev) => ({
       ...prev,
       [groupName]: [
@@ -403,7 +433,10 @@ export default function PurchaseOrder() {
     }));
   };
 
-  const handleUpdateItem = (groupName, rowIndex, field, value) => {
+  const handleUpdateItem = (groupName: string,
+  rowIndex: number,
+  field: string,
+  value: any) => {
     const rows = [...formData[groupName]];
     rows[rowIndex][field] = value;
 
@@ -417,7 +450,7 @@ export default function PurchaseOrder() {
     setFormData({ ...formData, [groupName]: rows });
   };
 
-  const handleRemoveItem = (groupName, rowIndex) => {
+  const handleRemoveItem = (groupName: string, rowIndex: number) => {
     const rows = [...formData[groupName]];
     rows.splice(rowIndex, 1);
     setFormData({ ...formData, [groupName]: rows });
@@ -433,7 +466,7 @@ export default function PurchaseOrder() {
             columns={columns}
             data={tableData}
             loading={isLoading}
-            onDelete={(row) => deletePO.mutate(row.id)}
+           onDelete={(row: { id: number }) => deletePO.mutate(row.id)}
           />
         </ComponentCardWthBtns>
       </div>

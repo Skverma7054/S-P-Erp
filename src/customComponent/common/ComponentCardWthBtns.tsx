@@ -1,59 +1,73 @@
 import React from "react";
 import { Search, Plus, Download, LayoutList } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../DropDown/Select";
+import CustomSelect from "../DropDown/CustomDropdown";
 // import DatePicker from "../form/date-picker";
+export type HeaderAction =
+  | {
+      type: "select";
+      key: string;
+      options: { label: string; value: string }[];
+      value?: string;
+      placeholder?: string;
+      disabled?: boolean;
+      onChange?: (value: string) => void;
+    }
+  | {
+      type: "search";
+      key: string;
+      placeholder?: string;
+      onChange?: (value: string) => void;
+    }
+  | {
+      type: "button";
+      key: string;
+      label: string;
+      icon?: React.ElementType;
+      variant?: "primary" | "secondary" | "outline";
+      onClick?: () => void;
+    }
+  | {
+      type: "download";
+      key: string;
+      onClick?: () => void;
+    }
+  | {
+      type: "tabs";
+      key: string;
+    };
 
 interface ComponentCardProps {
   title?: string;
   desc?: string;
   className?: string;
-  showSearch?: boolean;
-  showTabs?: boolean;
-  showDownload?: boolean;
-  showAddButton?: boolean;
-  showDropdown?: boolean;
-  showDate?: boolean;
-  range?: boolean;
-  dropdownOptions?: { label: string; value: string }[];
-  onDropdownChange?: (value: string) => void;
-  onAddClick?: () => void;
-  handleDateRange?: (value: [string, string] | string) => void;
-  onStartDateChange?: (value: string) => void;
-  onEndDateChange?: (value: string) => void;
-  onExportClick?: () => void;
+  actions?: HeaderAction[];
   children: React.ReactNode;
 }
+/* ================= HELPERS ================= */
 
+const getButtonClass = (variant?: string) => {
+  switch (variant) {
+    case "secondary":
+      return "flex items-center gap-1 px-3 py-1.5 border rounded-md text-sm";
+    case "outline":
+      return "flex items-center gap-1 px-3 py-1.5 border border-gray-300 rounded-md text-sm";
+    default:
+      return "flex items-center gap-1 px-3 py-1.5 bg-brand-500 text-white rounded-md text-sm";
+  }
+};
 const ComponentCardWthBtns: React.FC<ComponentCardProps> = ({
   title,
-  desc = "",
+  desc,
   className = "",
-  showSearch = false,
-  showTabs = false,
-  showDownload = false,
-  showAddButton = false,
-  showDropdown = false,
-  showDate = false,
-  range = false,
-  dropdownOptions,
-  onExportClick,
-  onDropdownChange,
-  onAddClick,
-  handleDateRange,
+  actions,
   children,
 }) => {
   return (
     <div
       className={`rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] ${className}`}
     >
-      {(title ||
-        showSearch ||
-        showTabs ||
-        showDownload ||
-        showAddButton ||
-        showDropdown ||
-        showDate ||
-        range) && (
+      {(title || actions?.length) && (
         <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-4 border-b border-gray-100 dark:border-gray-800">
           <div className="flex flex-col">
             {title && (
@@ -68,103 +82,87 @@ const ComponentCardWthBtns: React.FC<ComponentCardProps> = ({
             )}
           </div>
 
+         {/* RIGHT ACTIONS */}
           <div className="flex flex-wrap gap-2 items-center ml-auto">
-            {showDropdown && dropdownOptions?.length && (
-               <div className="space-y-2 relative z-[9999]">
-              {/* <label className="text-sm text-gray-700">State</label> */}
-              <Select 
-              // value={filters.state} onValueChange={(value) => setFilters({ ...filters, state: value })}
-                
-                >
-                <SelectTrigger className="
-          w-40 rounded-md border border-gray-300 bg-white 
-          text-sm text-gray-700 dark:text-white dark:border-gray-700
-          focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500
-          transition-all duration-200
-        ">
-                  <SelectValue placeholder="Select Case" />
-                </SelectTrigger>
-                <SelectContent  className="
-          bg-white border border-gray-200 dark:border-gray-700
-          shadow-lg rounded-lg z-[9999]
-        ">
-                  {/* <SelectItem value=" ">All Cases</SelectItem> */}
-                  {dropdownOptions.map(state => (
-                    <SelectItem  className="
-              text-gray-700 dark:text-white
-              hover:bg-green-50 dark:hover:bg-gray-800 cursor-pointer
-              focus:bg-green-100
-            " key={state.value} value={state.value}>{state.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            )}
-{/* {showDownload && (
-  <button
-    className="p-2 border rounded-md text-blue-500 hover:bg-blue-100 transition-all duration-200"
-    title="Download"
-    onClick={onExportClick}
-  >
-    <Download className="h-4 w-4" />
-  </button>
-)} */}
-            {/* {range && (
-              <DatePicker
-                id="dateRange"
-                mode="range"
-                size="sm"
-                onChange={(dates) => handleDateRange?.(dates)}
-              />
-            )}
+            {actions?.map((action) => {
+              switch (action.type) {
+                case "select":
+                  return (
+                    <div key={action.key} className="min-w-[180px]">
+                      <CustomSelect
+                        value={action.value}
+                        options={action.options}
+                        disabled={action.disabled}
+                        placeholder={action.placeholder || "Select"}
+                        onChange={(val) => action.onChange?.(val)}
+                      />
+                    </div>
+                  );
 
-            {showDate && (
-              <DatePicker
-                id="singleDate"
-                onChange={([date]) => console.log("Date:", date)}
-              />
-            )} */}
+                case "search":
+                  return (
+                    <div key={action.key} className="relative">
+                      <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
+                      <input
+                        type="text"
+                        placeholder={action.placeholder || "Search"}
+                        onChange={(e) =>
+                          action.onChange?.(e.target.value)
+                        }
+                        className="pl-8 pr-3 py-1.5 rounded-md border border-gray-300 text-sm focus:ring-2 focus:ring-green-500/20 outline-none"
+                      />
+                    </div>
+                  );
 
-            {showSearch && (
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="pl-8 pr-3 py-1.5 rounded-md border border-gray-300 dark:border-gray-700 text-sm text-gray-700 dark:text-white focus:ring-2  focus:border-green-500 focus:ring-green-500/20 outline-none"
-                />
-              </div>
-            )}
+                case "button":
+                  return (
+                    <button
+                      key={action.key}
+                      onClick={action.onClick}
+                      className={getButtonClass(action.variant)}
+                    >
+                      {action.icon && (
+                        <action.icon className="h-4 w-4" />
+                      )}
+                      {action.label}
+                    </button>
+                  );
 
-            {showTabs && (
-              <div className="flex border border-green-600 rounded-md overflow-hidden text-sm">
-                <button className="flex items-center gap-1 px-4 py-1 text-gray-700 dark:text-white">
-                  Org Hierarchy
-                </button>
-                <button className="flex items-center gap-1 px-4 py-1 bg-green-100 text-green-700">
-                  <LayoutList className="h-4 w-4" /> List
-                </button>
-              </div>
-            )}
+                case "download":
+                  return (
+                    <button
+                      key={action.key}
+                      onClick={action.onClick}
+                      className="p-2 border rounded-md text-blue-500 hover:bg-blue-100"
+                      title="Download"
+                    >
+                      <Download className="h-4 w-4" />
+                    </button>
+                  );
 
-            {showDownload && (
-              <button
-                className="p-2 border rounded-md text-blue-500 hover:bg-blue-100 transition-all duration-200"
-                title="Download"
-              >
-                <Download className="h-4 w-4" />
-              </button>
-            )}
+                case "tabs":
+                  return (
+                    <div
+                      key={action.key}
+                      className="flex border border-green-600 rounded-md overflow-hidden text-sm"
+                    >
+                      <button className="px-4 py-1 text-gray-700">
+                        Org Hierarchy
+                      </button>
+                      <button className="px-4 py-1 bg-green-100 text-green-700 flex items-center gap-1">
+                        <LayoutList className="h-4 w-4" /> List
+                      </button>
+                    </div>
+                  );
 
-            {showAddButton && (
-              <button
-                className="flex items-center gap-1 bg-brand-500 hover:bg-brand-600 text-white text-sm px-3 py-1.5 rounded-md transition-all duration-200"
-                onClick={onAddClick}
-              >
-                <Plus className="h-4 w-4" /> ADD
-              </button>
-            )}
+                default:
+                  return null;
+              }
+            })}
           </div>
+       
+      
+
         </div>
       )}
 

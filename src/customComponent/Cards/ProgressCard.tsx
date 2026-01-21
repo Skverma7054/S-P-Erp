@@ -1,5 +1,16 @@
 import React from "react";
 
+type ProgressCardProps = {
+  title?: string;
+  subtitle?: string;
+  chainage?: string;
+  contractValue?: string;
+  amountPaid?: string;
+  balance?: string;
+  duration?: string;
+  progress?: number;
+  loading?: boolean;
+};
 
 const ProgressCardSkeleton = () => {
   return (
@@ -54,17 +65,17 @@ const ProgressCardSkeleton = () => {
   );
 };
 
-const ProgressCard = ({ 
-  title, 
-  subtitle, 
-  chainage, 
-  contractValue, 
-  amountPaid, 
-  balance, 
-  duration, 
-  progress ,
-  loading
-}) => {
+const ProgressCard = ({
+  title,
+  subtitle,
+  chainage,
+  contractValue,
+  amountPaid,
+  balance,
+  duration,
+  progress = 0,
+  loading = false,
+}: ProgressCardProps) => {
 
   if (loading) return <ProgressCardSkeleton />;
 

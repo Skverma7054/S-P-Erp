@@ -2,6 +2,38 @@ import React, { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { axiosGet, postFetch } from "../../api/apiServices";
 import { Check, X } from "lucide-react";
+type Role = {
+  id: number;
+  name: string;
+};
+
+type Module = {
+  id: number;
+  Name: string;
+};
+
+type Permission = {
+  id: number;
+  action: string[];
+  roles?: { id: number }[];
+  modules?: { id: number }[];
+};
+
+type PermissionMatrix = {
+  [moduleId: number]: {
+    read: boolean;
+    create: boolean;
+    update: boolean;
+    delete: boolean;
+  };
+};
+
+type SavePermissionPayload = {
+  permissionPayload: {
+    moduleId: number;
+    action: string[];
+  }[];
+};
 
 const ACTIONS = ["read", "create", "update", "delete"];
 
@@ -9,7 +41,9 @@ export default function RolePermissionMatrix() {
   const queryClient = useQueryClient();
 
   // ⭐ Selected Role ------------------------------------------------
-  const [selectedRole, setSelectedRole] = useState(null);
+  const [selectedRole, setSelectedRole] = useState<number | null>(null);
+const [matrix, setMatrix] = useState<PermissionMatrix>({});
+
 
   // ⭐ Fetch Roles ---------------------------------------------------
   const { data: roleRes } = useQuery({
@@ -17,7 +51,7 @@ export default function RolePermissionMatrix() {
     queryFn: () => axiosGet("/role?page=1&limit=50"),
   });
 
-  const roles = roleRes?.roles || [];
+  const roles : Role[] = roleRes?.roles || [];
 
   // ⭐ Fetch Modules -------------------------------------------------
   const { data: moduleRes } = useQuery({
@@ -25,7 +59,7 @@ export default function RolePermissionMatrix() {
     queryFn: () => axiosGet("/module?page=1&limit=100"),
   });
 
-  const modules = moduleRes?.modules || [];
+  const modules : Module[] = moduleRes?.modules || [];
 
   // ⭐ Fetch Permissions ---------------------------------------------
   const { data: permRes } = useQuery({
@@ -33,10 +67,9 @@ export default function RolePermissionMatrix() {
     queryFn: () => axiosGet("/permission?page=1&limit=200"),
   });
 
-  const permissions = permRes?.permissions || [];
+  const permissions : Permission[] = permRes?.permissions || [];
 
   // ⭐ Local Permission Matrix ---------------------------------------
-  const [matrix, setMatrix] = useState({});
 
   useEffect(() => {
     if (!modules.length || !permissions.length) return;
@@ -69,7 +102,7 @@ export default function RolePermissionMatrix() {
   }, [modules, permissions, selectedRole]);
 
   // ⭐ Toggle Permission ---------------------------------------------
-  const toggle = (moduleId, action) => {
+  const toggle = (moduleId: number, action: keyof PermissionMatrix[number]) => {
     setMatrix((prev) => ({
       ...prev,
       [moduleId]: {
@@ -81,7 +114,7 @@ export default function RolePermissionMatrix() {
 
   // ⭐ Save API ------------------------------------------------------
   const saveMutation = useMutation({
-    mutationFn: (payload) => postFetch(`/role/${selectedRole}`, payload),
+    mutationFn: (payload: SavePermissionPayload) => postFetch(`/role/${selectedRole}`, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey:["permissions"]});
       alert("Permissions updated successfully!");
@@ -89,7 +122,7 @@ export default function RolePermissionMatrix() {
   });
 
   const handleSave = () => {
-    const permissionPayload = [];
+const permissionPayload: SavePermissionPayload["permissionPayload"] = [];
 
     Object.keys(matrix).forEach((moduleId) => {
       const active = ACTIONS.filter((action) => matrix[moduleId][action]);

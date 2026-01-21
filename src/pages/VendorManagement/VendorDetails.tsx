@@ -92,11 +92,21 @@ const tableData = [
     status: "Pending",
   },
 ];
+type MetricCard = {
+  id: string;
+  title: string;
+  value: string | number;
+  gradient?: string;
+  bgColor?: string;
+  borderColor?: string;
+  iconBg?: string;
+  textColor?: string;
+};
 
 export default function VendorDetails() {
 const location = useLocation();
 console.log(location,"LOCATION---")
-     const [metrics, setMetrics] = useState([]);
+const [metrics, setMetrics] = useState<MetricCard[]>([]);
 
      useEffect(() => {
           
@@ -147,7 +157,7 @@ console.log(location,"LOCATION---")
   }}
 />
  <div className="space-y-6 mt-6">
-<DashCards metrics={metrics} />
+<DashCards metrics={metrics} loading={false} />
     </div>
 
     <div className="space-y-6 mt-6">

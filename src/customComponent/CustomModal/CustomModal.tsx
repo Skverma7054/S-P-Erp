@@ -12,6 +12,39 @@ import CustomMultiSelect from "../DropDown/CustomMultiSelect";
 import MultiSelect from "../../components/form/MultiSelect";
 import TimePicker from "../../components/form/TimePicker";
 import DateTimePicker from "../../components/form/DateTimePicker";
+import FileInputExample from "../../components/form/form-elements/FileInputExample";
+import FileUploadInput from "../FileUpload/FileUploadInput";
+import Alert from "../../components/ui/alert/Alert";
+import DropzoneComponent from "../FileUpload/DropzoneComponent";
+interface CustomModalProps {
+  isOpen: boolean;
+  closeModal: () => void;
+  handleSave: () => void;
+  title: string;
+  subtitle?: string;
+  fields: any[];
+
+  formData: Record<string, any>;
+  setFormData: React.Dispatch<React.SetStateAction<any>>;
+
+  saveText?: string;
+  closeText?: string;
+  loading?: boolean;
+saveDisabled?: boolean; // ✅ ADD THIS
+  handleInput?: (name: string, value: any) => void;
+  onAddArrayItem?: (groupName: string) => void;
+  onUpdateArrayItem?: (
+    groupName: string,
+    rowIndex: number,
+    field: string,
+    value: any
+  ) => void;
+  onRemoveArrayItem?: (groupName: string, rowIndex: number) => void;
+
+  onEdit?: (row: any) => void;
+  onView?: (row: any) => void;
+}
+
 
 export default function CustomModal({
   isOpen,
@@ -25,23 +58,24 @@ export default function CustomModal({
   saveText = "Save",
   closeText = "Close",
   loading = false,   // ⬅ NEW
+  saveDisabled = false,
   handleInput,
   onAddArrayItem,
   onUpdateArrayItem,
   onRemoveArrayItem,
-}) {
+}:CustomModalProps) {
 
-  const internalHandleInput = (name, value) => {
+  const internalHandleInput = (name: string, value: any) => {
     console.log(name,value,"--internalHandleInput");
     
   if (handleInput) {
     handleInput(name, value); // use parent handler if provided
   } else {
-    setFormData((prev) => ({ ...prev, [name]: value })); // fallback
+    setFormData((prev: any) => ({ ...prev, [name]: value })); // fallback
   }
 };
-const internalAddItem = (groupName) => {
-  setFormData((prev) => ({
+const internalAddItem = (groupName: string) => {
+  setFormData((prev: any) => ({
     ...prev,
     [groupName]: [
       ...(prev[groupName] || []),
@@ -50,30 +84,34 @@ const internalAddItem = (groupName) => {
   }));
 };
 
-const internalUpdateItem = (groupName, rowIndex, fieldName, value) => {
+const internalUpdateItem = ( groupName: string,
+  rowIndex: number,
+  fieldName: string,
+  value: any) => {
   const rows = [...(formData[groupName] || [])];
   rows[rowIndex] = {
     ...rows[rowIndex],
     [fieldName]: value,
   };
 
-  setFormData((prev) => ({
+  setFormData((prev: any) => ({
     ...prev,
     [groupName]: rows,
   }));
 };
 
-const internalRemoveItem = (groupName, rowIndex) => {
+const internalRemoveItem = (groupName: string, rowIndex: number) => {
   const rows = [...(formData[groupName] || [])];
   rows.splice(rowIndex, 1);
 
-  setFormData((prev) => ({
+  setFormData((prev: any) => ({
     ...prev,
     [groupName]: rows,
   }));
 };
 
-const shouldShow = (showIf, formData) => {
+const shouldShow = ( showIf: string | { field: string; value: any } | undefined,
+  formData: Record<string, any>) => {
   if (!showIf) return true;
 
   // Case 1: string-based condition
@@ -127,7 +165,7 @@ const shouldShow = (showIf, formData) => {
 //   }));
 // };
 
-const addMaterialItem = (groupName) => {
+const addMaterialItem = (groupName: string) => {
   if (onAddArrayItem) {
     onAddArrayItem(groupName);
   } else {
@@ -173,7 +211,7 @@ const removeMaterialItem = (groupName, rowIndex) => {
           <div className="custom-scrollbar h-[450px] overflow-y-auto px-2 pb-3">
 
             {/* Loop all field groups */}
-            {fields.map((group) => {
+            {fields.map((group: any) => {
 
               if (!shouldShow(group.showIf, formData)) return null;
               // ✅ HERE — extract action config ONCE per group
@@ -203,7 +241,7 @@ const removeMaterialItem = (groupName, rowIndex) => {
                 <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
  
                   {/* Loop fields inside the group */}
-                  {group.items.map((field) => {
+                  {group.items.map((field: any) => {
 if (!shouldShow(field.showIf, formData)) return null;
 return (
                     <div key={field.name} className={field.fullWidth ? "col-span-2" : ""}>
@@ -367,6 +405,48 @@ return (
 </>
 
 )}
+{field.type === "fileselect" && (
+  <FileUploadInput
+    label={field.label}
+    accept={field.accept}
+    value={formData[field.name] || null}
+    onChange={(file) =>
+      internalHandleInput(field.name, file)
+    }
+  />
+)}
+
+
+{field.type === "dropfileselect" && (
+ 
+    <DropzoneComponent
+      title={field.label}
+      accept={field.accept}
+      multiple={field.multiple ?? false}
+     value={formData[field.name] || null}
+      helperText={field.helperText}
+      onFileSelect={(files) =>
+        internalHandleInput(
+          field.name,
+          field.multiple ? files :  files?.[0] || null
+        )
+      }
+    />
+ 
+)}
+{/* ALERT BOX */}
+{field.type === "alert" && (
+  
+    <Alert
+      variant={field.variant || "info"}
+      title={field.title}
+      message={field.message}
+      showLink={field.showLink}
+      linkHref={field.linkHref}
+      linkText={field.linkText}
+    />
+ 
+)}
 
 
                     </div>)
@@ -376,7 +456,7 @@ return (
      {group.type === "array" && (
   <div>
     
-    {formData[group.name]?.map((row, rowIndex) => (
+    {formData[group.name]?.map((row: any, rowIndex: number) => (
       <div
         key={rowIndex}
         className="mb-4 rounded-xl bg-gray-50 p-3"
@@ -708,7 +788,7 @@ return (
             <Button
   size="sm"
   onClick={handleSave}
-  disabled={loading}
+  disabled={loading|| saveDisabled}
   className="flex items-center gap-2"
 >
   {loading && (

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router";
-import { ChevronRight, Database, FileBadge, FolderKanban, Settings, ShieldUser, User } from 'lucide-react';
+import { ChevronRight, Database, FileBadge, FolderKanban, Route, Settings, ShieldUser, User } from 'lucide-react';
 // Assume these icons are imported from an icon library
 import {
   BoltIcon,
@@ -19,7 +19,7 @@ import {
 import { useSidebar } from "../context/SidebarContext";
 import SidebarWidget from "./SidebarWidget";
 import { useAuth } from "../pages/AuthPages/AuthProvider";
-
+import logo from "../assets/logo/S&plogo.jpg"
 type NavItem = {
   name: string;
   icon: React.ReactNode;
@@ -78,6 +78,12 @@ const navItems: NavItem[] = [
     name: "DPR Module",
     icon: <FileBadge />,
     path: "/dpr-module"
+    // subItems: [{ name: "Form Elements", path: "/form-elements", pro: false }],
+  },
+  {
+    name: "Chainage Tracking",
+    icon: <Route />,
+    path: "/chainage-tracking"
     // subItems: [{ name: "Form Elements", path: "/form-elements", pro: false }],
   },
   {
@@ -385,14 +391,14 @@ console.log(hasModuleAccess("Inventory"));
       onMouseEnter={() => !isExpanded && setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div
+      {/* <div
         className={`py-8 flex ${
           !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
         }`}
       >
         <Link to="/">
 
-          {/* {isExpanded || isHovered || isMobileOpen ? (
+          {isExpanded || isHovered || isMobileOpen ? (
             <>
               <img
                 className="dark:hidden"
@@ -416,34 +422,63 @@ console.log(hasModuleAccess("Inventory"));
               width={32}
               height={32}
             />
-          )} */}
+          )}
            {isExpanded || isHovered || isMobileOpen ? (
             <>
               <img
                 className="dark:hidden"
-                src="/fav.jpeg"
+                src={logo}
                 alt="Logo"
                 width={40}
                 height={20}
               />
+             
               <img
                 className="hidden dark:block"
-               src="/fav.jpeg"
+               src={logo}
                 alt="Logo"
-                width={150}
-                height={40}
+                width={40}
+                height={20}
               />
             </>
           ) : (
             <img
-             src="/fav.jpeg"
+              src={logo}
               alt="Logo"
               width={32}
               height={32}
             />
           )}
         </Link>
-      </div>
+      </div> */}
+      <div
+  className={`py-8 flex ${
+    !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
+  }`}
+>
+  <Link to="/" className="flex items-center gap-3">
+    {/* Logo Image */}
+    <img
+      src={logo}
+      alt="S&P Logo"
+      className="w-8 h-8 object-contain"
+    />
+
+    {/* Logo Text */}
+    {(isExpanded || isHovered || isMobileOpen) && (<>
+     <div className="flex flex-col leading-tight">
+    <span className="text-xl font-semibold tracking-wide text-gray-900 dark:text-white">
+      S&amp;P
+    </span>
+    <span className="text-xs text-gray-500">
+      ERP Suite
+    </span>
+  </div>
+</>
+    )}
+  </Link>
+</div>
+
       <div className="flex-1 overflow-y-auto duration-300 ease-linear no-scrollbar">
       {/* <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar"> */}
         <nav className="mb-6">

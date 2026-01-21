@@ -20,11 +20,11 @@ export default function ManagePermission() {
   const queryClient = useQueryClient();
 const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const [matrix, setMatrix] = useState({});
+const [matrix, setMatrix] = useState<Record<number, Record<string, boolean>>>({});
   const [originalMatrix, setOriginalMatrix] = useState({});
   const [selectedModuleId, setSelectedModuleId] = useState(null);
   const [editingPermissionId, setEditingPermissionId] = useState(null);
-const [selectedModuleIds, setSelectedModuleIds] = useState([]);
+const [selectedModuleIds, setSelectedModuleIds] = useState<number[]>([]);
 const [activeModuleId, setActiveModuleId] = useState(null);
 
   // ----------------------------------------------------------

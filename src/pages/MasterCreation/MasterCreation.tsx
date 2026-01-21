@@ -7,8 +7,23 @@ import { useModal } from "../../hooks/useModal";
 import CustomModal from "../../customComponent/CustomModal/CustomModal";
 import CustomSelectModal from "../../customComponent/CustomModal/CustomSelectModal";
 import { useNavigate } from "react-router";
-import { axiosGet, AxiosGetWithParams, postFetch } from "../../api/apiServices";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { axiosDelete, axiosGet, AxiosGetWithParams, axiosPatch, postFetch } from "../../api/apiServices";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import ConfirmDialog from "../../customComponent/CustomModal/ConfirmDialog";
+
+type Category = { id: number; name: string };
+type Unit = { id: number; name: string };
+type Material = any; // backend-driven, keep flexible for now
+type MaterialPayload = {
+  name: string;
+  categoryId: number;
+  unitId: number;
+  status: string;
+  minimum_threshold_quantity: number;
+  material_code: string;
+};
+
 const columns = [
   { key: "materialName", label: "Material Name" },
   { key: "category", label: "Category" },
@@ -148,6 +163,12 @@ export default function MasterCreation() {
   const materialModal = useModal();  // For Add / Edit material
 const projectModal = useModal();   // For Material Inventory
 const navigate = useNavigate();
+const queryClient = useQueryClient();
+
+const [editingMaterialId, setEditingMaterialId] = useState<number | null>(null);
+
+const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+const [materialToDelete, setMaterialToDelete] = useState<any>(null);
 
   const [formData, setFormData] = useState({
   name: "",
@@ -178,13 +199,13 @@ const { data: unitData , isLoading:unitLoading } = useQuery({
     }),
 });
 const categoryOptions =
-  categoryData?.categories?.map((cat) => ({
+  categoryData?.categories?.map((cat: Category) => ({
     value: String(cat.id),
     label: cat.name,
   })) || [];
 
 const unitOptions =
-  unitData?.units?.map((unit) => ({
+  unitData?.units?.map((unit:Unit) => ({
     value: String(unit.id),
     label: unit.name,
   })) || [];
@@ -251,6 +272,7 @@ const modalFields = [
     // alert("Material Inventory clicked!");
   };
   const handleAddMaterial = () => {
+     setEditingMaterialId(null); // ✅ important
   setFormData({
    name: "",
   categoryId: "",
@@ -263,29 +285,46 @@ const modalFields = [
   materialModal.openModal();
   // openModal();
 };
-const addMaterial = useMutation({
-  mutationFn: (payload) => postFetch("/material", payload),
-  onSuccess: (res) => {
-    console.log("Material Created:", res);
-    alert("Material added successfully!");
+const createMaterial = useMutation({
+  mutationFn: (payload: MaterialPayload) => postFetch("/material", payload),
 
+  onSuccess: () => {
+    toast.success("Material created successfully ✅");
+    queryClient.invalidateQueries({ queryKey: ["materials"] });
     materialModal.closeModal();
-
-    // Optional: clear form
-    setFormData({
-      name: "",
-      category: "",
-      unit: "",
-      code: "",
-      minThreshold: "",
-      status: "Active",
-    });
   },
-  onError: (err) => {
-    console.error("Material API Error:", err);
-    alert(err?.message || "Failed to add material!");
+
+  onError: (err: any) => {
+    toast.error(err?.message || "Failed to create material ❌");
   },
 });
+const updateMaterial = useMutation({
+  mutationFn: ({ id, payload }: { id: number; payload: MaterialPayload }) =>
+    axiosPatch(`/material/${id}`, payload),
+
+  onSuccess: () => {
+    toast.success("Material updated successfully ✨");
+    queryClient.invalidateQueries({ queryKey: ["materials"] });
+    materialModal.closeModal();
+  },
+
+  onError: (err: any) => {
+    toast.error(err?.message || "Failed to update material ❌");
+  },
+});
+const deleteMaterial = useMutation({
+  mutationFn: (id: number) => axiosDelete(`/material/${id}`),
+
+  onSuccess: () => {
+    toast.success("Material deleted successfully ✅");
+    queryClient.invalidateQueries({ queryKey: ["materials"] });
+  },
+
+  onError: (err: any) => {
+    toast.error(err?.message || "Failed to delete material ❌");
+  },
+});
+
 const { data: materialData, isLoading, isError } = useQuery({
   queryKey: ["materials"],               // cache key
   queryFn: () =>
@@ -299,7 +338,7 @@ const { data: materialData, isLoading, isError } = useQuery({
 console.log(materialData,"----Material data");
 
 const tableData =
-  materialData?.materials?.map((item) => ({
+  materialData?.materials?.map((item:Material) => ({
     id: item.id,
     materialName: item.name ?? "-", // fallback
     category: item.category?.name ?? "-", // ✅ safe
@@ -316,7 +355,7 @@ const tableData =
   })) || [];
 
 
-  const handleSave = () => {
+ const handleSave = () => {
   const payload = {
     name: formData.name,
     categoryId: Number(formData.categoryId),
@@ -326,18 +365,53 @@ const tableData =
     material_code: formData.material_code,
   };
 
-  console.log("Payload sending:", payload);
+  if (editingMaterialId) {
+    updateMaterial.mutate({ id: editingMaterialId, payload });
+  } else {
+    createMaterial.mutate(payload);
+  }
+};
+const handleEdit = (row: any) => {
+  console.log(row,"---HAndle Edit");
+  
+  setEditingMaterialId(row.id);
 
-  addMaterial.mutate(payload);
+  setFormData({
+    name: row.materialName,
+     categoryId: String(row.categoryId), // ✅ force string
+    unitId: String(row.unitId),         // ✅ force string
+    material_code: row.code,
+    minimum_threshold_quantity: row.minThreshold,
+    status:
+      row.status?.toLowerCase() === "active"
+        ? "Active"
+        : "Inactive", // ✅ normalize
+  });
+
+  materialModal.openModal();
+};
+const handleDelete = (row: any) => {
+  setMaterialToDelete(row);
+  setDeleteDialogOpen(true);
 };
 
+const handleConfirmDelete = async () => {
+  if (!materialToDelete) return;
+
+  await deleteMaterial.mutateAsync(materialToDelete.id);
+
+  setDeleteDialogOpen(false);
+  setMaterialToDelete(null);
+};
+
+
   const actionButtons = [
-    {
-      label: "Material Inventory",
-      icon: Package,
-      variant: "gray",
-      onClick: handleMaterialInventory,
-    },
+    // {
+    //   label: "Material Inventory",
+    //   icon: Package,
+    //   variant: "gray",
+    //   onClick: handleMaterialInventory,
+    // },
     {
       label: "Add New Material",
       icon: Plus,
@@ -359,24 +433,25 @@ const tableData =
     // },
   ];
   const handleView = (row: any) => alert(`Viewing: ${row}`);
-  const handleEdit = (row) => {
-  setFormData({
-    name: row.materialName ?? "",
-    categoryId: row.categoryId || "",
-    unitId: row.unitId || "",
-    material_code: row.code ?? "",
-    minimum_threshold_quantity: row.minThreshold ?? "",
-    status: row.status ?? "Active",
-  });
+//   const handleEdit = (row:any) => {
+//   setFormData({
+//     name: row.materialName ?? "",
+//     categoryId: row.categoryId || "",
+//     unitId: row.unitId || "",
+//     material_code: row.code ?? "",
+//     minimum_threshold_quantity: row.minThreshold ?? "",
+//     status: row.status ?? "Active",
+//   });
 
-  materialModal.openModal();
+//   materialModal.openModal();
+// };
+
+
+  const handleExport = () => {
+  alert("Download triggered");
 };
 
-  const handleDelete = (row: any) => alert(`Deleting: ${row.user.name}`);
-  const handleExport = () => {
-    alert(`Download: ${row.user.name}`);
-  };
- const handleProject = (row) => {
+ const handleProject = (row:any) => {
     console.log(`handleProject: ${row}`);
     projectModal.closeModal();   // Close modal
   navigate(`/project-material/${row.id}`, {
@@ -390,26 +465,15 @@ const tableData =
       <div className="space-y-6 mt-6">
         <ComponentCardWthBtns
           title="Manage material master data"
-          // showSearch
-          // showAddButton
-          // onAddClick={() => console.log("Add Case clicked")}
-          // showDropdown
-          // dropdownOptions={[
-          //   { label: "All Cases", value: "all" },
-          //   { label: "Ongoing", value: "ongoing" },
-          //   { label: "Closed", value: "closed" },
-          // ]}
-          // onDropdownChange={(value) => console.log("Filter:", value)}
-          // showDownload
-          // onExportClick={handleExport}
+         
         >
           <CustomTable
             columns={columns}
             data={tableData || []}
   loading={isLoading}
             onView={handleView}
-onEdit={(row) => handleEdit(row)}
-            onDelete={handleDelete}
+ onEdit={handleEdit}
+  onDelete={handleDelete}
           />
         </ComponentCardWthBtns>
       </div>
@@ -417,25 +481,38 @@ onEdit={(row) => handleEdit(row)}
         isOpen={materialModal.isOpen}
         closeModal={materialModal.closeModal}
         handleSave={handleSave}
-       title={formData.name ? "Edit Material" : "Add New Material"}
+       title={editingMaterialId ? "Edit Material" : "Add New Material"}
 
-        subtitle="Fill the below details to add a new material"
+        subtitle="Fill the below details to save material"
         fields={modalFields}
         formData={formData}
         setFormData={setFormData}
-        saveText={formData.name ? "Update Material" : "Save Material"}
-// closeText={formData.name ? "Edit Material" : "Add New Material"}
+       saveText={editingMaterialId ? "Update Material" : "Save Material"}
 
         // saveText="Save Material"
         closeText="Cancel"
+        loading={createMaterial.isPending || updateMaterial.isPending} // ✅ FIX
       />
-      <CustomSelectModal
-      
+      <ConfirmDialog
+  isOpen={deleteDialogOpen}
+  onClose={() => {
+    setDeleteDialogOpen(false);
+    setMaterialToDelete(null);
+  }}
+  onConfirm={handleConfirmDelete}
+  title="Delete Material"
+  message={`Are you sure you want to delete "${materialToDelete?.materialName}"?`}
+  confirmText="Yes, Delete"
+  cancelText="Cancel"
+  type="error"
+/>
+
+      {/* <CustomSelectModal
       projects={projects}
       isOpen={projectModal.isOpen}
       closeModal={projectModal.closeModal}
       onProjectClick={handleProject}
-      />
+      /> */}
     </>
   );
 }

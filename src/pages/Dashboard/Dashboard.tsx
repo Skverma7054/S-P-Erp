@@ -2,6 +2,13 @@ import React, { useState } from 'react'
 import { SummaryCards } from '../../customComponent/SummaryCards'
 import { CasesTable } from '../../customComponent/CaseTable'
 import { mockCases, mockLawyers } from '../../data/mockData';
+export type Case = {
+  id: number;
+  title: string;
+  status: "Ongoing" | "Closed";
+  lawyer: string;
+  createdAt: string;
+};
 
 export default function Dashboard() {
 

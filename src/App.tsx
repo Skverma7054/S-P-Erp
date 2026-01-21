@@ -44,6 +44,10 @@ import PurchaseOrder from "./pages/InventoryManagement/PurchaseOrder";
 import GoodReceipt from "./pages/InventoryManagement/GoodReceipt";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import PublicRoute from "./routes/PublicRoute";
+import PurchaseOrderPage from "./pages/PurchaseOrderManage/PurchaseOrderPage";
+import GoodsReceiptPage from "./pages/GoodRecieptNote/GoodsReceiptPage";
+import ChainageTracking from "./pages/Chainage Tracking/ChainageTracking";
+import ChainageUploadDetails from "./pages/Chainage Tracking/ChainageUploadDetails";
 
 export default function App() {
   return (
@@ -71,9 +75,10 @@ export default function App() {
 <Route path="/vendor-detail/:id" element={<VendorDetails />} />
 <Route path="/dpr-detail/:id" element={<DprDetail />} />
 <Route index path="/pr-create" element={<PrCreate/>} />
-<Route index path="/purchase-order" element={<PurchaseOrder/>} />
-<Route index path="/good-receipt" element={<GoodReceipt/>} />
-
+<Route index path="/purchase-order" element={<PurchaseOrderPage/>} />
+<Route index path="/good-receipt" element={<GoodsReceiptPage/>} />
+<Route index path="/chainage-tracking" element={<ChainageTracking/>} />
+<Route path="/chainage/:uploadId" element={<ChainageUploadDetails />} />
 {/* <Route index path="/dash" element={<Home/>} /> */}
 {/* <Route index path="/dash1" element={<Dashboard1/>} /> */}
 

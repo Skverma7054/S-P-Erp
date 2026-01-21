@@ -125,7 +125,19 @@ const Alert: React.FC<AlertProps> = ({
             {title}
           </h4>
 
-          <p className="text-sm text-gray-500 dark:text-gray-400">{message}</p>
+          {/* <p className="text-sm text-gray-500 dark:text-gray-400">{message}</p> */}
+          {Array.isArray(message) ? (
+  <ul className="list-disc pl-5 text-sm text-gray-500 dark:text-gray-400 space-y-1">
+    {message.map((point, idx) => (
+      <li key={idx}>{point}</li>
+    ))}
+  </ul>
+) : (
+  <p className="text-sm text-gray-500 dark:text-gray-400">
+    {message}
+  </p>
+)}
+
 
           {showLink && (
             <Link

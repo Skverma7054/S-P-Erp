@@ -192,74 +192,74 @@ const projectModalFields = [
     },
   ],
 },
-{
-    heading: "",        
-    items: [
-      {
-        name: "enableOutsource",
-        type: "switch",
-        label: "Enable Outsourcing?",
-        fullWidth: true,
-      },
-    ],
-  },
-  {
-    heading: "Outsourcing Details",
-     showIf: { field: "enableOutsource", value: true },
-    items: [
+// {
+//     heading: "",        
+//     items: [
+//       {
+//         name: "enableOutsource",
+//         type: "switch",
+//         label: "Enable Outsourcing?",
+//         fullWidth: true,
+//       },
+//     ],
+//   },
+//   {
+//     heading: "Outsourcing Details",
+//      showIf: { field: "enableOutsource", value: true },
+//     items: [
     
-    {
-      name: "subcontractor",
-      label: "Subcontractor Name",
-      type: "text",
-      showIf: "enableOutsource",   // 👈 Show only when switch is ON
-      placeholder: "Enter subcontractor name",
-    },
-    {
-      name: "scope",
-      label: "Scope of Work",
-      type: "textarea",
-      showIf: "enableOutsource",
-      placeholder: "Describe the scope of work",
-      fullWidth: true,
-    },
-    {
-      name: "contractValue",
-      label: "Contract Value",
-      type: "number",
-      showIf: "enableOutsource",
-      placeholder: "Enter amount",
-    },
-      {
-        name: "chainageOutsourceStart",
-        label: "Chainage Start",
-        type: "number",
-        showIf: "enableOutsource", 
-        placeholder: "0",
-      },
-      {
-        name: "chainageOutsourceEnd",
-        label: "Chainage End",
-        type: "number",
-        showIf: "enableOutsource", 
-        placeholder: "20",
-      },
-      {
-        name: "startOutsourceDate",
-        label: "Outsourcing Start Date",
-        type: "date",
-        showIf: "enableOutsource", 
-        placeholder: "dd-mm-yyyy",
-      },
-      {
-        name: "endOutsourceDate",
-        label: "Outsourcing End Date",
-        type: "date",
-        showIf: "enableOutsource", 
-        placeholder: "dd-mm-yyyy",
-      },
-    ],
-  },
+//     {
+//       name: "subcontractor",
+//       label: "Subcontractor Name",
+//       type: "text",
+//       showIf: "enableOutsource",   // 👈 Show only when switch is ON
+//       placeholder: "Enter subcontractor name",
+//     },
+//     {
+//       name: "scope",
+//       label: "Scope of Work",
+//       type: "textarea",
+//       showIf: "enableOutsource",
+//       placeholder: "Describe the scope of work",
+//       fullWidth: true,
+//     },
+//     {
+//       name: "contractValue",
+//       label: "Contract Value",
+//       type: "number",
+//       showIf: "enableOutsource",
+//       placeholder: "Enter amount",
+//     },
+//       {
+//         name: "chainageOutsourceStart",
+//         label: "Chainage Start",
+//         type: "number",
+//         showIf: "enableOutsource", 
+//         placeholder: "0",
+//       },
+//       {
+//         name: "chainageOutsourceEnd",
+//         label: "Chainage End",
+//         type: "number",
+//         showIf: "enableOutsource", 
+//         placeholder: "20",
+//       },
+//       {
+//         name: "startOutsourceDate",
+//         label: "Outsourcing Start Date",
+//         type: "date",
+//         showIf: "enableOutsource", 
+//         placeholder: "dd-mm-yyyy",
+//       },
+//       {
+//         name: "endOutsourceDate",
+//         label: "Outsourcing End Date",
+//         type: "date",
+//         showIf: "enableOutsource", 
+//         placeholder: "dd-mm-yyyy",
+//       },
+//     ],
+//   },
 
 ];
 

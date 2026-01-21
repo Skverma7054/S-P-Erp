@@ -10,4 +10,7 @@ export const MODULE_MAP: Record<string, string> = {
   "/good-receipt": "Inventory Management",
   "/dpr-module": "DPR Module",
   "/manage-category":"Master Creation",
+  "/manage-unit":"Master Creation",
+  "/chainage-tracking":"Chainage Tracking"
 };
+// Pages Route Define

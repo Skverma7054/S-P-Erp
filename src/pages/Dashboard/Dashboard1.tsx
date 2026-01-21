@@ -14,6 +14,8 @@ import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import ComponentCardWthBtns from "../../customComponent/common/ComponentCardWthBtns";
 import CustomTable from "../../customComponent/tables/CustomTable";
 import CombinedRowCharts from "../../customComponent/Charts/CombinedRowCharts";
+
+
 // --- Demo Data ---
 const consumptionData = {
   all: [
@@ -178,7 +180,7 @@ const cards = [
 ];
 
 export default function Dashboard1() {
-  const [metrics, setMetrics] = useState([]);
+const [metrics, setMetrics] = useState<any[]>([]);
   const [selectedProject, setSelectedProject] = useState("");
   const dprColumns = [
     { key: "dprNo", label: "DPR No" },
@@ -235,8 +237,9 @@ export default function Dashboard1() {
   const handleEdit = (row: any) => alert(`Editing: ${row.user.name}`);
   const handleDelete = (row: any) => alert(`Deleting: ${row.user.name}`);
   const handleExport = () => {
-    alert(`Download: ${row.user.name}`);
-  };
+  alert("Download triggered");
+};
+
 
   useEffect(() => {
     // Simulate API call
